@@ -1368,11 +1368,9 @@ document.addEventListener('input',  function(){ isDirty=true; });
 document.addEventListener('change', function(){ isDirty=true; });
 
 /* ── API helpers ── */
-function sbFetch(path, method, body){
+function sbFetch(path, method, body, prefer){
   // Works from file://, http:// and https://
   if(window.location.protocol==='file:'){
-    // Supabase can't be reached from file:// due to browser CORS policy.
-    // Host the file on any simple server (e.g. VS Code Live Server, python -m http.server)
     return Promise.reject(new Error('file:// — use a local server for Supabase sync'));
   }
   return fetch(SB_URL+'/rest/v1/'+path, {
@@ -1381,10 +1379,15 @@ function sbFetch(path, method, body){
       'apikey': SB_KEY,
       'Authorization': 'Bearer '+SB_KEY,
       'Content-Type': 'application/json',
-      'Prefer': 'return=representation'
+      'Prefer': prefer||'return=representation'
     },
     body: body ? JSON.stringify(body) : undefined
-  }).then(function(r){ return r.json(); });
+  }).then(function(r){
+    if(!r.ok) return r.json().then(function(e){ throw new Error(e.message||'HTTP '+r.status); });
+    // 204 No Content (PATCH success) returns empty body
+    if(r.status===204) return {};
+    return r.json();
+  });
 }
 
 /* ── Coleta todo o estado atual da página ── */
@@ -1559,37 +1562,56 @@ function saveNow(manual){
   saveInProgress = true;
   setSaveStatus('saving','Salvando...');
 
-  var payload = collectState();
-  payload.nome_grupo = nome.trim();
-  payload.integrantes = (document.getElementById('members-input')||{}).value||'';
+  var state = collectState();
+  // Build flat payload matching mba_sessoes columns exactly
+  var payload = {
+    nome_grupo:   nome.trim(),
+    integrantes:  (document.getElementById('members-input')||{}).value||'',
+    fase_atual:   state.fase_atual,
+    score_total:  state.score_total,
+    fase1:        state.fase1,
+    fase2:        state.fase2,
+    fase3:        state.fase3,
+    fase4:        state.fase4,
+    fase5:        state.fase5,
+    fase6:        state.fase6,
+    swot_actions: state.swot_actions,
+    plan_actions: state.plan_actions
+  };
 
   var promise;
   if(currentSessionId){
-    // UPDATE
+    // UPDATE existing row
     promise = sbFetch('mba_sessoes?id=eq.'+currentSessionId, 'PATCH', payload);
   } else {
-    // INSERT
-    promise = sbFetch('mba_sessoes', 'POST', payload).then(function(res){
-      var row = Array.isArray(res)?res[0]:res;
-      if(row&&row.id){ currentSessionId=row.id; }
-      return res;
-    });
+    // INSERT new row — upsert by nome_grupo to avoid duplicates
+    promise = sbFetch('mba_sessoes', 'POST', payload, 'resolution=merge-duplicates')
+      .then(function(res){
+        var row = Array.isArray(res)?res[0]:res;
+        if(row && row.id){ currentSessionId = row.id; }
+        return res;
+      });
   }
 
   promise.then(function(res){
+    // Check for Supabase error object
+    if(res && res.code && res.message){
+      throw new Error('Supabase: '+res.message+' ('+res.code+')');
+    }
     saveInProgress = false;
     isDirty = false;
     lastSaveTime = new Date();
-    setSaveStatus('ok','Salvo com sucesso');
-    document.getElementById('save-last').textContent='Último save: '+lastSaveTime.toLocaleTimeString('pt-BR');
+    setSaveStatus('ok','✅ Salvo às '+lastSaveTime.toLocaleTimeString('pt-BR'));
+    var el = document.getElementById('save-last');
+    if(el) el.textContent = 'Último save: '+lastSaveTime.toLocaleTimeString('pt-BR');
   }).catch(function(err){
     saveInProgress = false;
-    if(err.message&&err.message.indexOf('file://')>-1){
-      setSaveStatus('warn','Abra via servidor local para salvar (ex: Live Server do VS Code)');
+    console.error('Supabase save error:', err);
+    if(err.message && err.message.indexOf('file://')>-1){
+      setSaveStatus('warn','Abra via GitHub Pages ou Live Server');
     } else {
-      setSaveStatus('error','Erro ao salvar. Verifique a conexão.');
+      setSaveStatus('error','Erro: '+err.message);
     }
-    console.warn('Supabase:', err.message);
   });
 }
 
@@ -2597,6 +2619,30 @@ setTimeout(function(){
 <!-- ══════════════ SIDEBAR ══════════════ -->
 <div class="side-col">
 
+  <!-- SUPABASE SAVE STATUS — sticky no topo, sempre visível -->
+  <div class="side-section" style="background:var(--green-faint);border-bottom:2px solid var(--green-mid);position:sticky;top:0;z-index:10;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div class="side-title" style="color:var(--green);margin-bottom:0;">💾 Sincronização</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span id="save-dot" style="width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .3s;"></span>
+        <span id="save-msg" style="font-size:10px;color:var(--muted);">Aguardando...</span>
+      </div>
+    </div>
+    <button class="btn btn-success" style="width:100%;justify-content:center;font-size:12px;padding:8px;" onclick="saveNow(true)">
+      💾 Salvar Agora
+    </button>
+    <div style="font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;" id="save-last">Último save: —</div>
+    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;display:flex;gap:5px;">
+      <input id="resume-input" class="finput" type="text" placeholder="Retomar sessão..." style="font-size:11px;padding:4px 8px;flex:1;">
+      <button class="btn btn-secondary" style="padding:4px 10px;font-size:11px;" onclick="resumeSession()">↩</button>
+    </div>
+    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;">
+      <button class="btn" style="width:100%;justify-content:center;font-size:10px;padding:5px;background:var(--green);color:#fff;letter-spacing:1px;" onclick="openProfPanel()">
+        📊 Painel do Professor
+      </button>
+    </div>
+  </div>
+
   <!-- Setup -->
   <div class="side-section">
     <div class="side-title">Configuração</div>
@@ -2658,29 +2704,6 @@ setTimeout(function(){
     </div>
   </div>
 
-  <!-- SUPABASE SAVE STATUS -->
-  <div class="side-section" style="background:var(--green-faint);border-top:2px solid var(--green-mid);">
-    <div class="side-title" style="color:var(--green);">💾 Salvamento Automático</div>
-    <div id="save-status" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <span id="save-dot" style="width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .3s;"></span>
-      <span id="save-msg" style="font-size:11px;color:var(--muted);">Aguardando nome do grupo...</span>
-    </div>
-    <div style="font-size:10px;color:var(--dim);margin-bottom:10px;line-height:1.6;" id="save-last">Último save: —</div>
-    <button class="btn btn-success" style="width:100%;justify-content:center;font-size:11px;padding:7px;" onclick="saveNow(true)">
-      💾 Salvar Agora
-    </button>
-    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;">
-      <div class="f-lbl" style="margin-bottom:5px;">Retomar sessão salva</div>
-      <div style="display:flex;gap:5px;">
-        <input id="resume-input" class="finput" type="text" placeholder="Nome do grupo..." style="font-size:11px;padding:5px 8px;flex:1;">
-        <button class="btn btn-secondary" style="padding:5px 10px;font-size:11px;" onclick="resumeSession()">Buscar</button>
-      </div>
-    </div>
-    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;">
-      <a href="?professor=true" target="_blank" style="display:block;text-align:center;font-size:10px;color:var(--green);letter-spacing:1px;text-decoration:none;font-weight:700;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;">
-        📊 Painel do Professor →
-      </a>
-    </div>
   </div>
 
 </div><!-- /side-col -->
