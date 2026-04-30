@@ -1,0 +1,3057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jornada do Consumidor — UNIALFA MBA 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+// Safety stubs — overridden by real definitions in main script below
+// Prevents any ReferenceError if onclick fires during parse
+var _pendingCase = null;
+// These are overridden by main script — stubs just prevent errors during parse:
+function openCase(id){_pendingCase=id;}
+function goTo(n){}
+function startTimer(m){}
+function stopTimer(){}
+function completePhase(a,b){}
+function addSwotAction(q,p,c,l){}
+function exportSwotToActionPlan(){}
+function filterActions(q,b){}
+function sortActions(by){}
+function addManualAction(){}
+function removeAction(i){}
+function recalcScore(i){}
+function dragStart(e,i){}
+function dragOver(e){e.preventDefault&&e.preventDefault();}
+function dragDrop(e,i){}
+function saveNow(m){}
+function resumeSession(){}
+function openProfPanel(){}
+function calcScore(){}
+function toggleProgress(id){}
+function updateGroup(v){var g=document.getElementById('group-label');if(g)g.textContent=v?'GRUPO: '+v.toUpperCase():'GRUPO —';}
+function syncBrand(){}
+function syncPersona(){}
+function resetBudget(){}
+function updateDiagScore(s){}
+function scoreOmni(el){}
+function cycleTp(k,el){}
+function updateActBadge(i,v){}
+function scoreAct(i){}
+function toggleAct(i){}
+function updateSwotActionText(id,q,p,v){}
+function removeSwotAction(id,q){}
+function addActionRow(){}
+function onSlider(id,v,el){}
+function updateBudget(){}
+function updateGapScore(s){}
+function renderActionPlan(){}
+function wireSWOTPreviews(){}
+// These have NO main-script definition — keep real impl here:
+function setTip(n){ var el=document.getElementById('phase-tip'); if(el&&typeof phaseTips!=='undefined') el.textContent=phaseTips[n-1]||''; }
+function closeModalDirect(){var o=document.getElementById('modal-overlay');if(o)o.classList.remove('open');var p=document.getElementById('prof-overlay');if(p)p.classList.remove('open');}
+function closeModal(e){if(e.target===e.currentTarget)closeModalDirect();}
+</script>
+<style>
+:root{
+  --red:#C62828;--red-dk:#8E1C1C;--red-lt:#EF5350;--red-faint:#FEF2F2;--red-mid:#FECACA;
+  --white:#FFFFFF;--page:#F0F2F5;--surf:#FAFAFA;--card:#FFFFFF;
+  --dark:#111827;--mid:#374151;--muted:#6B7280;--dim:#9CA3AF;
+  --border:#E5E7EB;--line:#F3F4F6;
+  --gold:#B45309;--gold-faint:#FFFBEB;--gold-mid:#FDE68A;
+  --green:#15803D;--green-lt:#16A34A;--green-faint:#F0FDF4;--green-mid:#BBF7D0;
+  --blue:#1D4ED8;--blue-faint:#EFF6FF;--blue-mid:#BFDBFE;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.09);
+}
+
+/* ── SWOT CRUZADA ── */
+.swot-action-item{background:var(--surf);border:1px solid var(--border);border-radius:3px;padding:8px 10px;position:relative;animation:fadeUp .18s ease;}
+.swot-action-item .sai-header{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.sai-type{font-size:9px;font-weight:800;letter-spacing:1.5px;padding:2px 7px;border-radius:20px;}
+.sai-del{position:absolute;top:7px;right:8px;cursor:pointer;color:var(--dim);font-size:11px;background:none;border:none;line-height:1;}
+.sai-del:hover{color:var(--red);}
+.sai-input{width:100%;background:#fff;border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:12px;color:var(--dark);padding:5px 8px;outline:none;border-radius:2px;}
+.sai-input:focus{border-color:var(--red);}
+
+/* ── ACTION PLAN TABLE ── */
+.action-row{display:grid;grid-template-columns:28px 56px 1fr 90px 80px 70px 70px 70px 80px 60px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);transition:background .15s;}
+.action-row:hover{background:var(--surf);}
+.action-row:last-child{border-bottom:none;}
+.ar-drag{cursor:grab;color:var(--dim);font-size:14px;user-select:none;}
+.ar-drag:active{cursor:grabbing;}
+.ar-type{font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 7px;border-radius:20px;text-align:center;}
+.ar-input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;outline:none;border-radius:2px;}
+.ar-input:focus{border-color:var(--red);background:#fff;}
+.ar-score-input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--dark);padding:4px 6px;text-align:center;outline:none;border-radius:2px;}
+.ar-score-input:focus{border-color:var(--red);background:#fff;}
+.ar-score-badge{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;text-align:center;padding:4px 8px;border-radius:3px;min-width:48px;display:block;}
+.ar-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:3px;}
+.ar-del:hover{color:var(--red);}
+
+/* ── FILTER BUTTONS ── */
+.filter-btn{background:var(--line);border:1px solid var(--border);color:var(--muted);padding:4px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:20px;transition:all .15s;}
+.filter-btn:hover{border-color:var(--red-mid);color:var(--red);}
+.filter-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* ── MATRIX QUAD ITEMS ── */
+.quad-item{font-size:10px;color:var(--mid);background:#fff;border:1px solid var(--border);padding:3px 7px;border-radius:2px;line-height:1.4;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Barlow',sans-serif;background:var(--page);color:var(--dark);display:flex;flex-direction:column;}
+
+/* ── TOPNAV ── */
+.topnav{background:#fff;border-bottom:3px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;flex-shrink:0;box-shadow:var(--shadow);z-index:300;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-box{background:var(--red);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:1.5px;padding:4px 10px;color:#fff;}
+.brand-info{line-height:1.2;}
+.brand-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;color:var(--dark);}
+.brand-sub{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+.nav-center{display:flex;gap:2px;}
+.nav-tab{height:56px;padding:0 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .18s;white-space:nowrap;}
+.nav-tab:hover{color:var(--muted);background:var(--line);}
+.nav-tab.active{color:var(--red);border-bottom-color:var(--red);}
+.nav-tab.done{color:var(--green);}
+.tab-num{width:20px;height:20px;border-radius:50%;background:var(--line);border:1px solid var(--border);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.nav-tab.active .tab-num{background:var(--red);color:#fff;border-color:var(--red);}
+.nav-tab.done .tab-num{background:var(--green-lt);color:#fff;border-color:var(--green-lt);}
+.tab-dur{font-size:8px;color:var(--dim);font-family:'Barlow',sans-serif;font-weight:400;letter-spacing:.5px;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.group-pill{background:var(--line);border:1px solid var(--border);padding:3px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;color:var(--muted);}
+.timer-box{display:flex;align-items:center;gap:0;}
+.timer-disp{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;letter-spacing:2px;background:var(--red);color:#fff;padding:5px 14px;min-width:78px;text-align:center;}
+.timer-ctrls{display:flex;flex-direction:column;gap:2px;margin-left:3px;}
+.tc-btn{background:var(--line);border:1px solid var(--border);font-size:9px;color:var(--muted);cursor:pointer;padding:2px 7px;font-family:'Barlow',sans-serif;}
+.tc-btn:hover{background:var(--border);}
+
+/* ── LIBRARY BAR ── */
+.lib-bar{background:#fff;border-bottom:1px solid var(--border);padding:7px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:var(--shadow);}
+.lib-label{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.lib-cases{display:flex;gap:6px;flex-wrap:wrap;}
+.lib-case-btn{display:flex;align-items:center;gap:6px;background:var(--line);border:1px solid var(--border);padding:5px 12px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:12px;color:var(--mid);border-radius:2px;transition:all .18s;font-weight:500;}
+.lib-case-btn:hover{background:var(--red-faint);border-color:var(--red-mid);color:var(--red);}
+.lib-case-btn .case-sector{font-size:9px;color:var(--dim);letter-spacing:.5px;}
+.lib-sep{width:1px;height:28px;background:var(--border);}
+
+/* ── WORKSPACE ── */
+.workspace{flex:1;display:flex;overflow:hidden;}
+.main-col{flex:1;overflow-y:auto;padding:28px 32px 40px;}
+.side-col{width:296px;background:#fff;border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0;}
+
+/* ── PANELS ── */
+.panel{display:none;}
+.panel.active{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PHASE HEADER ── */
+.phase-hdr{display:flex;align-items:flex-start;gap:18px;margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid var(--border);}
+.ph-icon{background:var(--red);color:#fff;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;flex-shrink:0;}
+.ph-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:.5px;line-height:1;}
+.ph-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--red);font-weight:700;margin-top:3px;}
+.ph-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-top:7px;max-width:620px;}
+.ph-time-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gold-faint);border:1px solid var(--gold-mid);padding:3px 10px;font-size:11px;color:var(--gold);font-weight:600;margin-top:8px;}
+
+/* ── SECTION LABEL ── */
+.sec-lbl{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
+.sec-lbl::before{content:'';width:3px;height:14px;background:var(--red);display:block;}
+.sec-block{margin-bottom:28px;}
+
+/* ── INPUTS ── */
+.f-wrap{display:flex;flex-direction:column;gap:4px;}
+.f-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.f-hint{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.5;}
+.finput{background:#fff;border:1px solid var(--border);color:var(--dark);padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;width:100%;outline:none;transition:border-color .18s;border-radius:2px;}
+.finput:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-faint);}
+.finput::placeholder{color:var(--dim);}
+textarea.finput{resize:vertical;line-height:1.55;}
+select.finput option{background:#fff;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+
+/* ── CARD ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px 20px;box-shadow:var(--shadow);}
+.card-red{border-left:3px solid var(--red);}
+.card-green{border-left:3px solid var(--green-lt);}
+.card-blue{border-left:3px solid var(--blue);}
+.card-gold{border-left:3px solid var(--gold);}
+
+/* ── JOURNEY STAGE BUILDER ── */
+.stage-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;}
+.jstage{background:#fff;padding:0;}
+.jstage-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);}
+.jstage-letter{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--red);}
+.jstage-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dark);}
+.jstage-eng{font-size:9px;color:var(--dim);font-weight:400;}
+.jstage-body{padding:10px 12px 14px;}
+.jstage-field{margin-bottom:8px;}
+.jstage-field label{display:block;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:3px;}
+.jstage-field textarea{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;}
+.jstage-field textarea:focus{border-color:var(--red);background:#fff;}
+.jstage-field textarea::placeholder{color:var(--dim);}
+.jstage-field input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;outline:none;border-radius:1px;}
+.jstage-field input:focus{border-color:var(--red);background:#fff;}
+.jstage-field input::placeholder{color:var(--dim);}
+.tp-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+.tp-pill{font-size:10px;padding:2px 7px;border:1px solid var(--border);cursor:pointer;font-family:'Barlow',sans-serif;color:var(--muted);background:#fff;border-radius:20px;transition:all .15s;user-select:none;}
+.tp-pill:hover{border-color:var(--red-mid);}
+.tp-pill.on-dig{background:var(--blue-faint);border-color:var(--blue-mid);color:var(--blue);}
+.tp-pill.on-off{background:var(--red-faint);border-color:var(--red-mid);color:var(--red);}
+.tp-pill.on-hyb{background:var(--gold-faint);border-color:var(--gold-mid);color:var(--gold);}
+.tp-legend{display:flex;gap:10px;font-size:10px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;align-items:center;}
+.tp-legend span{display:flex;align-items:center;gap:4px;}
+.dot{width:8px;height:8px;border-radius:50%;}
+.dot-dig{background:var(--blue);}
+.dot-off{background:var(--red);}
+.dot-hyb{background:var(--gold);}
+
+/* ── EMOTION TRACK ── */
+.emotion-track{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;}
+.emo-cell{background:#fff;padding:10px 12px;}
+.emo-stage{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:6px;}
+.emo-select{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;outline:none;border-radius:1px;}
+.emo-select:focus{border-color:var(--red);}
+.emo-note{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;margin-top:5px;outline:none;resize:none;min-height:36px;border-radius:1px;}
+.emo-note:focus{border-color:var(--red);background:#fff;}
+
+/* ── GAP ANALYSIS ── */
+.gap-row{display:grid;grid-template-columns:130px 1fr 1fr 80px;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line);}
+.gap-row:last-child{border-bottom:none;}
+.gap-stage-tag{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--red);padding-top:2px;}
+.gap-score-sel{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;outline:none;border-radius:1px;}
+.gap-score-sel:focus{border-color:var(--red);}
+.score-badge{display:inline-block;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;border-radius:20px;}
+.score-1,.score-2{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.score-3{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+.score-4,.score-5{background:var(--green-faint);color:var(--green);border:1px solid var(--green-mid);}
+
+/* ── BUDGET ── */
+.budget-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+.bstat{background:#fff;border:1px solid var(--border);padding:14px 16px;border-radius:3px;box-shadow:var(--shadow);}
+.bstat-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.bstat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1;}
+.bstat-val.red{color:var(--red);}
+.bstat-val.green{color:var(--green);}
+.bstat-val.gold{color:var(--gold);}
+.bstat-sub{font-size:10px;color:var(--dim);margin-top:3px;}
+.budget-track{background:var(--line);height:4px;margin-bottom:20px;border-radius:2px;overflow:hidden;}
+.budget-track-fill{height:4px;background:var(--red);transition:width .3s;border-radius:2px;}
+.ch-row{display:grid;grid-template-columns:150px 1fr 65px;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+.ch-row:last-child{border-bottom:none;}
+.ch-name{font-size:12px;font-weight:500;color:var(--mid);display:flex;align-items:center;gap:6px;}
+.ch-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ch-dig{background:var(--blue);}
+.ch-off{background:var(--red);}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);outline:none;cursor:pointer;border-radius:2px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--red);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);}
+.ch-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--dark);text-align:right;}
+
+/* ── METRICS ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.metric-card{background:#fff;border:1px solid var(--border);padding:14px;border-radius:3px;box-shadow:var(--shadow);}
+.metric-name{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.metric-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;line-height:1;}
+.metric-val.good{color:var(--green);}
+.metric-val.warn{color:var(--gold);}
+.metric-val.bad{color:var(--red);}
+.metric-delta{font-size:10px;color:var(--dim);margin-top:3px;}
+
+/* ── ACTIVATION BLOCKS ── */
+.act-block{background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);}
+.act-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--line);background:var(--surf);}
+.act-head:hover{background:var(--line);}
+.act-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+.act-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+.act-tags{display:flex;gap:6px;align-items:center;}
+.act-badge{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.5px;}
+.badge-off{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.badge-dig{background:var(--blue-faint);color:var(--blue);border:1px solid var(--blue-mid);}
+.badge-hyb{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+.badge-none{background:var(--line);color:var(--dim);border:1px solid var(--border);}
+.act-chevron{font-size:11px;color:var(--dim);transition:transform .2s;}
+.act-chevron.open{transform:rotate(180deg);}
+.act-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.act-body.hidden{display:none;}
+
+/* ── COLLAB ── */
+.collab-stage{background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:10px;box-shadow:var(--shadow);}
+.collab-stage-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surf);}
+.collab-stage-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;}
+.collab-add{background:none;border:1px solid var(--border);color:var(--muted);padding:3px 10px;font-size:10px;cursor:pointer;font-family:'Barlow',sans-serif;letter-spacing:.5px;border-radius:2px;}
+.collab-add:hover{border-color:var(--red);color:var(--red);}
+.collab-notes{padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;min-height:64px;}
+.cnote{background:var(--surf);border:1px solid var(--border);border-left:3px solid var(--red);padding:7px 10px;font-size:11px;color:var(--mid);min-width:120px;max-width:200px;line-height:1.5;position:relative;}
+.cnote-tag{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:3px;}
+.cnote-del{position:absolute;top:4px;right:6px;cursor:pointer;color:var(--dim);font-size:10px;}
+.cnote-del:hover{color:var(--red);}
+
+/* ── CASE COMPARISON TABLE ── */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.cmp-table th{background:var(--surf);border:1px solid var(--border);padding:8px 12px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.cmp-table td{border:1px solid var(--border);padding:7px 10px;color:var(--mid);vertical-align:top;}
+.cmp-table tr:nth-child(even) td{background:var(--surf);}
+.sim-tag{display:inline-block;padding:1px 6px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.sim-y{background:var(--green-faint);color:var(--green);border:1px solid var(--green-mid);}
+.sim-n{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.sim-p{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+
+/* ── PRESENTATION ── */
+.pres-summary{background:#fff;border:1px solid var(--border);border-radius:3px;padding:20px;box-shadow:var(--shadow);}
+.pres-section{margin-bottom:20px;}
+.pres-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dark);border-bottom:2px solid var(--border);padding-bottom:7px;margin-bottom:12px;}
+.pres-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px;}
+.pres-row:last-child{border-bottom:none;}
+.pres-row .pk{color:var(--muted);}
+.pres-row .pv{color:var(--dark);font-weight:600;}
+.eval-row{display:grid;grid-template-columns:1fr 55px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+.eval-name{font-size:12px;color:var(--mid);}
+.eval-weight{font-size:11px;color:var(--dim);text-align:right;font-weight:600;}
+.eval-input{background:var(--surf);border:1px solid var(--border);color:var(--dark);padding:5px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;text-align:center;width:100%;outline:none;border-radius:2px;}
+.eval-input:focus{border-color:var(--red);}
+.final-score-box{background:var(--surf);border:1px solid var(--border);padding:20px;text-align:center;margin-top:16px;border-radius:3px;}
+.final-score-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:56px;line-height:1;}
+.final-score-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.grade-pill{display:inline-block;margin-top:10px;padding:4px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;border-radius:2px;}
+
+/* ── TIPS / CALLOUTS ── */
+.tip-box{background:var(--gold-faint);border:1px solid var(--gold-mid);border-left:3px solid var(--gold);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:14px;}
+.tip-box strong{color:var(--gold);font-weight:700;}
+.info-box{background:var(--blue-faint);border:1px solid var(--blue-mid);border-left:3px solid var(--blue);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:12px;}
+.warn-box{background:var(--red-faint);border:1px solid var(--red-mid);border-left:3px solid var(--red);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:12px;}
+.callout-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.callout-label.gold{color:var(--gold);}
+.callout-label.blue{color:var(--blue);}
+.callout-label.red{color:var(--red);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .18s;border-radius:2px;}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--mid);}
+.btn-secondary:hover{border-color:var(--red);color:var(--red);}
+.btn-success{background:var(--green-lt);color:#fff;}
+.btn-success:hover{background:var(--green);}
+.btn-ghost{background:var(--line);border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{background:var(--border);}
+.btn-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+
+/* ── SIDEBAR ── */
+.side-section{padding:18px;border-bottom:1px solid var(--border);}
+.side-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.setup-field{margin-bottom:12px;}
+.progress-list{display:flex;flex-direction:column;gap:0;}
+.progress-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);cursor:pointer;transition:color .15s;}
+.progress-item:last-child{border-bottom:none;}
+.progress-item.done{color:var(--dim);text-decoration:line-through;}
+.progress-item.active-item{color:var(--dark);font-weight:600;}
+.chk-box{width:16px;height:16px;border:1.5px solid var(--border);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;transition:all .15s;}
+.chk-box.checked{background:var(--green-lt);border-color:var(--green-lt);}
+.chk-box.checked::after{content:'✓';font-size:9px;color:#fff;font-weight:700;}
+.score-display{text-align:center;padding:10px 0;}
+.score-big{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:44px;color:var(--red);line-height:1;}
+.score-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+.phase-prog{display:flex;flex-direction:column;gap:6px;}
+.pp-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}
+.pp-bar{background:var(--line);height:3px;border-radius:2px;margin-top:3px;overflow:hidden;}
+.pp-fill{height:3px;background:var(--red);border-radius:2px;transition:width .4s;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,24,39,.65);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:#fff;border:1px solid var(--border);border-top:3px solid var(--red);width:820px;max-height:88vh;overflow-y:auto;border-radius:4px;box-shadow:var(--shadow-md);animation:mUp .25s ease;}
+@keyframes mUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 26px 16px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;letter-spacing:.5px;}
+.modal-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-weight:700;margin-top:3px;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--dim);padding:0 4px;line-height:1;}
+.modal-close:hover{color:var(--red);}
+.modal-body{padding:22px 26px;}
+.case-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+.case-kpi{background:var(--surf);border:1px solid var(--border);padding:10px 12px;border-radius:3px;text-align:center;}
+.case-kpi-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--red);display:block;}
+.case-kpi-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+.case-section{margin-bottom:18px;}
+.case-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;}
+.case-strategy-list{display:grid;gap:8px;}
+.case-strat-item{display:flex;gap:10px;padding:10px 12px;background:var(--surf);border:1px solid var(--border);border-radius:3px;}
+.strat-icon{width:28px;height:28px;background:var(--red-faint);border:1px solid var(--red-mid);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border-radius:2px;}
+.strat-text{flex:1;}
+.strat-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--dark);margin-bottom:2px;}
+.strat-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.case-lesson{background:var(--gold-faint);border:1px solid var(--gold-mid);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:8px;}
+.case-lesson strong{color:var(--gold);}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.tag{display:inline-block;padding:2px 8px;font-size:10px;border-radius:20px;font-weight:600;letter-spacing:.5px;}
+.tag-off{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.tag-dig{background:var(--blue-faint);color:var(--blue);border:1px solid var(--blue-mid);}
+.tag-hyb{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+</style>
+
+<script>
+
+</script>
+<script>
+/* ══════════════════════════════════════
+   DATA
+══════════════════════════════════════ */
+var stageData = [
+  {id:'aware',letter:'A',name:'Aware',en:'Descoberta',
+   tps:['TV/Rádio','Outdoor/OOH','Indicação','Google Ads','Meta Ads','Influencer','SEO Orgânico','PR/Imprensa']},
+  {id:'appeal',letter:'A',name:'Appeal',en:'Atração',
+   tps:['Vitrine/PDV','Evento','Showroom','Website','Landing Page','Reels/Stories','Email Mkt','App']},
+  {id:'ask',letter:'A',name:'Ask',en:'Pesquisa',
+   tps:['Vendedor','Catálogo','Demonstração','Google Search','Reviews/Rating','WhatsApp','Comparadores','Chatbot']},
+  {id:'act',letter:'A',name:'Act',en:'Compra',
+   tps:['Loja Física','Click & Collect','Televendas','E-commerce','App Compra','Marketplace','Retargeting','WhatsApp Commerce']},
+  {id:'advocate',letter:'A',name:'Advocate',en:'Advocacia',
+   tps:['Pós-venda','Fidelidade','Comunidade','Newsletter','UGC/Reviews','Programa Indica','App Fidelidade','NPS/Pesquisa']}
+];
+
+var emotions = ['Curiosidade','Empolgação','Interesse','Confiança','Dúvida','Ansiedade','Frustração','Satisfação','Decepção','Surpresa positiva','Pertencimento','Orgulho'];
+
+var channels_off = [
+  {id:'tv',name:'TV & Rádio',cac:0.75,ltv:1.15,nps:0.4,max:25000},
+  {id:'ooh',name:'OOH / Outdoor',cac:0.85,ltv:1.0,nps:0.3,max:15000},
+  {id:'eventos',name:'Eventos & Ativações',cac:0.65,ltv:1.6,nps:1.3,max:20000},
+  {id:'mkt_direto',name:'Mala Direta / Televendas',cac:0.7,ltv:1.2,nps:0.6,max:12000}
+];
+var channels_dig = [
+  {id:'seo',name:'SEO & Conteúdo',cac:0.4,ltv:1.35,nps:0.8,max:15000},
+  {id:'ads',name:'Google & Meta Ads',cac:0.55,ltv:1.1,nps:0.5,max:30000},
+  {id:'email',name:'Email & Automação',cac:0.25,ltv:2.1,nps:1.2,max:10000},
+  {id:'influencer',name:'Influenciadores',cac:0.6,ltv:1.2,nps:1.0,max:15000},
+  {id:'crm',name:'CRM & Fidelidade',cac:0.3,ltv:2.5,nps:1.8,max:12000},
+  {id:'social',name:'Redes Sociais Orgânico',cac:0.45,ltv:1.3,nps:0.9,max:8000}
+];
+
+var allChannels = channels_off.concat(channels_dig);
+var budgetState = {};
+allChannels.forEach(function(c){budgetState[c.id]=0;});
+
+var phaseTips = [
+  'Seja específico na persona. "Mulher, 35 anos" é fraco. "Cláudia, 35 anos, advogada, mãe de 1 filho, usa Instagram para se inspirar e WhatsApp para comprar" é uma persona que guia decisões.',
+  'No diagnóstico, a honestidade vale mais que o otimismo. Uma fraqueza bem identificada hoje vira uma oportunidade de diferenciação amanhã.',
+  'A jornada não é linear. Sua persona pode pular do Aware direto pro Act, ou voltar do Act pro Ask várias vezes. Mapeie a realidade, não o ideal.',
+  'Budget é estratégia. Cada real alocado deve ter justificativa na jornada mapeada. Se você alocou 40% em digital mas sua persona prefere loja física, você tem um problema.',
+  'O plano de 90 dias é o que diferencia MBA de graduação. Não é "melhorar redes sociais" — é "publicar 3 Reels por semana com orçamento de R$800/mês, meta de 5k alcance por post até o dia 90".',
+  'Na apresentação: dados primeiro, insight depois, ação por último. Nunca o contrário.'
+];
+
+var progressItems = [
+  {id:'p1',text:'Marca e persona definidas',phase:1},
+  {id:'p2',text:'Diagnóstico SWOT concluído',phase:2},
+  {id:'p3',text:'Presença por canal avaliada',phase:2},
+  {id:'p4',text:'Jornada 5A\'s mapeada',phase:3},
+  {id:'p5',text:'Mapa emocional preenchido',phase:3},
+  {id:'p6',text:'Gaps identificados',phase:3},
+  {id:'p7',text:'Ativações propostas',phase:3},
+  {id:'p8',text:'Orçamento alocado',phase:4},
+  {id:'p9',text:'Justificativa escrita',phase:4},
+  {id:'p10',text:'Plano 90 dias definido',phase:5},
+  {id:'p11',text:'Roadmap omnichannel ok',phase:5},
+  {id:'p12',text:'Case comparado',phase:5},
+  {id:'p13',text:'Apresentação entregue',phase:6}
+];
+var checkedItems = {};
+var totalScore = 0;
+var timerInt = null;
+var timerSecs = 0;
+var currentPhase = 1;
+var tpState = {}; // key -> 0,1,2,3 (0=off,1=off-line,2=digital,3=hybrid)
+
+var caseData = {
+  magalu:{
+    title:'Magazine Luiza',sub:'Omnichannel · Varejo · Plataforma Digital',
+    kpis:[{v:'+300%',l:'Crescimento digital 3 anos'},{v:'40M+',l:'Clientes ativos'},{v:'R$186bi',l:'E-commerce BR 2024'},{v:'6M',l:'Seguidores da Lu'}],
+    context:'De varejista tradicional fundada em Franca-SP a maior plataforma de varejo digital do Brasil. A Magalu transformou 1.200 lojas físicas em ativos estratégicos do ecossistema digital — ao invés de fechá-las.',
+    strategies:[
+      {icon:'🏪',title:'Lojas como Hub Digital',desc:'Cada loja vira ponto de retirada (Click & Collect), mini-centro de distribuição (Ship from Store) e estúdio de conteúdo. A loja física potencializa o digital.'},
+      {icon:'📱',title:'Super App Magalu',desc:'Um único app com marketplace, serviços financeiros, streaming e assistente virtual. A jornada começa e termina no app — mas pode passar pela loja.'},
+      {icon:'🤖',title:'Lu do Magalu',desc:'Influenciadora virtual com 6M+ seguidores. Conteúdo 24/7, sem férias, sem crise de imagem. Prova que a marca é a mídia.'},
+      {icon:'💳',title:'Magalu Pagamentos',desc:'Cartão e crédito próprios integrados à jornada de compra. O serviço financeiro é o fio que costura loja + app + fidelidade.'}
+    ],
+    lesson:'O varejo físico não compete com o digital — ele o complementa. A questão não é "loja ou app" mas "como cada canal serve melhor o cliente em cada momento da jornada".'
+  },
+  boticario:{
+    title:'O Boticário',sub:'CRM · Personalização · Programa de Fidelidade',
+    kpis:[{v:'25M+',l:'Membros Clube Viva'},{v:'4.000+',l:'Franquias integradas'},{v:'3x',l:'Ticket médio fidelizados'},{v:'R$12bi',l:'Faturamento 2023'}],
+    context:'Com 4.000 franquias independentes, o Boticário tinha um problema clássico de silos: cada franqueado "possuía" seu cliente. A solução foi construir uma visão 360° do cliente que atravessa todos os canais sem eliminar a autonomia dos franqueados.',
+    strategies:[
+      {icon:'💎',title:'Clube Viva — Cross-channel',desc:'Programa de fidelidade que acumula pontos independentemente do canal: loja física, app ou e-commerce. O cliente é reconhecido em qualquer ponto de contato.'},
+      {icon:'🧠',title:'IA de Recomendação',desc:'Algoritmo que usa histórico de compras, data de aniversário e preferências para sugerir produtos certos na hora certa. Personalização em escala para 25M membros.'},
+      {icon:'📊',title:'CDP Proprietário',desc:'Plataforma de dados que unifica informações de 4.000 franquias + e-commerce + app. Franqueados recebem insights do cliente sem acesso aos dados brutos.'},
+      {icon:'📧',title:'CRM Segmentado',desc:'Comunicação diferenciada por perfil: o cliente que compra perfume não recebe o mesmo email de quem compra skincare. 760% mais receita em listas segmentadas.'}
+    ],
+    lesson:'Fidelidade não é programa de pontos — é reconhecimento. O Boticário prova que conhecer o histórico do cliente vale mais do que qualquer desconto.'
+  },
+  riachuelo:{
+    title:'Riachuelo',sub:'Phygital · Moda · Omnichannel',
+    kpis:[{v:'300+',l:'Lojas integradas'},{v:'R$6,5bi',l:'Receita 2023'},{v:'40%',l:'Vendas multi-canal'},{v:'R$1bi+',l:'Cartão Midway'}],
+    context:'A Riachuelo precisava resolver um paradoxo da moda: a experiência de experimentar roupa é física e insubstituível, mas o cliente descobre, compara e decide cada vez mais no digital. A resposta foi criar uma jornada phygital sem fricção.',
+    strategies:[
+      {icon:'👗',title:'Provador Virtual (RA)',desc:'Tecnologia de realidade aumentada no app que permite "experimentar" roupas digitalmente. Reduz a barreira da compra online em moda — o maior gargalo do setor.'},
+      {icon:'🛍️',title:'Click & Collect',desc:'Compra online, retira na loja. Estoque unificado em tempo real em 300+ lojas. O cliente não vai à loja "buscar" — ele vai e muitas vezes compra mais.'},
+      {icon:'📱',title:'Vendedor Conectado',desc:'Equipe de loja com tablets que acessam o histórico de compras online do cliente. O vendedor físico tem contexto digital — personaliza o atendimento presencial.'},
+      {icon:'💳',title:'Cartão Midway',desc:'Serviço financeiro próprio como elo de fidelidade. Clientes com cartão têm ticket médio e frequência significativamente maiores.'}
+    ],
+    lesson:'40% das vendas vêm de clientes que usam mais de um canal. Esse dado muda tudo: em vez de competir, os canais precisam se alimentar mutuamente.'
+  },
+  centauro:{
+    title:'Centauro',sub:'Omnichannel · Varejo Esportivo · Ship from Store',
+    kpis:[{v:'230+',l:'Lojas integradas'},{v:'R$4,2bi',l:'Receita SBF 2023'},{v:'35%',l:'E-commerce via Ship from Store'},{v:'287%',l:'Maior taxa de compra omnichannel'}],
+    context:'A Centauro é a maior varejista de artigos esportivos da América Latina. Sua estratégia omnichannel transformou lojas físicas em centros logísticos distribuídos, acelerando entrega e reduzindo custos.',
+    strategies:[
+      {icon:'📦',title:'Ship from Store',desc:'35% das entregas do e-commerce partem das lojas físicas, não de centros de distribuição. Prazo menor, custo menor, e a loja se torna ativo logístico.'},
+      {icon:'🗃️',title:'Estoque Unificado',desc:'Visibilidade em tempo real do estoque de 230+ lojas no app e site. O cliente sabe antes de sair de casa se o produto está disponível.'},
+      {icon:'⭐',title:'Programa Fã',desc:'Fidelidade integrada entre canais. Pontos acumulados na loja física são usados no app. Sem silos, sem frustração.'},
+      {icon:'📊',title:'Vendedor com Dados',desc:'Equipe de loja com acesso ao histórico digital do cliente. O vendedor sabe o que o cliente pesquisou online antes de entrar na loja.'}
+    ],
+    lesson:'Lojas físicas custam caro. A Centauro fez elas pagarem o custo e ainda gerarem lucro ao transformá-las em centros de distribuição do e-commerce.'
+  },
+  netflix:{
+    title:'Netflix',sub:'Personalização por IA · Retenção · Dados Comportamentais',
+    kpis:[{v:'80%',l:'Views via recomendação'},{v:'260M+',l:'Assinantes 2024'},{v:'US$1bi',l:'Economia anual com retenção'},{v:'250+',l:'Testes A/B simultâneos'}],
+    context:'A Netflix não é uma empresa de streaming — é uma empresa de dados que usa conteúdo como produto. Cada decisão, da thumbnail ao investimento em série, é guiada por dados comportamentais de 260M usuários.',
+    strategies:[
+      {icon:'🎯',title:'Algoritmo de Recomendação',desc:'Analisa histórico, horário, dispositivo e contexto para sugerir o conteúdo certo. 80% das visualizações são geradas por recomendação, não por busca ativa.'},
+      {icon:'🖼️',title:'Thumbnail Personalizada',desc:'A mesma série tem capas diferentes para cada usuário, baseadas no que mais atrai aquele perfil. Uma série pode ter 30 versões de thumbnail.'},
+      {icon:'🎬',title:'Conteúdo Guiado por Dados',desc:'House of Cards foi encomendada porque dados mostraram que usuários que assistiam filmes de Kevin Spacey também gostavam de David Fincher. Produto + marketing unificados.'},
+      {icon:'🧪',title:'Cultura de Testes A/B',desc:'Mais de 250 testes simultâneos em interface, recomendações, preços e comunicação. Nenhuma decisão sem dado.'}
+    ],
+    lesson:'Personalização não é uma feature — é a estratégia. A Netflix prova que entender o que o cliente quer antes que ele saiba é o maior diferencial competitivo do marketing moderno.'
+  },
+  airbnb:{
+    title:'Airbnb',sub:'UGC · Comunidade · SEO · Crescimento Orgânico',
+    kpis:[{v:'7,7M+',l:'Anúncios ativos'},{v:'US$9,9bi',l:'Receita 2023'},{v:'90%',l:'Tráfego orgânico'},{v:'220+',l:'Países presentes'}],
+    context:'O Airbnb cresceu para US$9,9bi de receita gastando quase nada em publicidade paga. O segredo: transformar usuários em produtores de conteúdo e construir um SEO que captura demanda em vez de comprá-la.',
+    strategies:[
+      {icon:'⭐',title:'UGC como Motor de Marketing',desc:'Avaliações, fotos e histórias dos hóspedes geram 90% da confiança necessária para a conversão. O cliente convence o próximo cliente — sem custo para a plataforma.'},
+      {icon:'🔍',title:'SEO de Conteúdo em Escala',desc:'Páginas otimizadas para cada destino, bairro e tipo de experiência. "Apartamentos para alugar em Itaim Bibi" — o Airbnb captura a intenção antes do competidor.'},
+      {icon:'🎁',title:'Programa de Indicação Viral',desc:'Crescimento explosivo via referral: créditos para quem indica e para quem é indicado. Estrutura de incentivo que transforma satisfação em aquisição.'},
+      {icon:'🎭',title:'Experiências Airbnb',desc:'Expansão além da hospedagem para atividades locais. Novos touchpoints, nova receita, e o cliente dura mais na plataforma.'}
+    ],
+    lesson:'Quando o produto é bom e os usuários confiam na plataforma, eles fazem o marketing por você. Construir essa confiança custa mais tempo do que dinheiro — mas o retorno é exponencial.'
+  },
+  uber:{
+    title:'Uber',sub:'App-First · Dados · Expansão de Ecossistema',
+    kpis:[{v:'150M+',l:'Usuários ativos mensais'},{v:'9,4bi',l:'Viagens em 2023'},{v:'US$37bi',l:'Receita bruta 2023'},{v:'+17%',l:'Crescimento a.a.'}],
+    context:'O Uber reinventou a jornada do consumidor no transporte ao eliminar todas as fricções: sem espera na rua, sem negociação de preço, sem troco, sem dúvida de rota. Cada ponto de atrito virou um diferencial.',
+    strategies:[
+      {icon:'📱',title:'App-First Total',desc:'Toda a jornada — pedido, rastreamento, pagamento, avaliação — acontece no app sem nenhuma saída. A experiência é o produto.'},
+      {icon:'💰',title:'Precificação Dinâmica',desc:'Surge pricing baseado em oferta e demanda em tempo real. Marketing e produto integrados: o preço é a mensagem.'},
+      {icon:'🌐',title:'Expansão do Ecossistema',desc:'Uber Eats, Flash e Moto ampliam a jornada do cliente para além do transporte. Cada novo produto aumenta o LTV e reduz o custo de retenção.'},
+      {icon:'🎯',title:'Personalização por Dados',desc:'O app aprende rota, horário e preferência de cada usuário para antecipar necessidades. O produto fica mais útil quanto mais você usa.'}
+    ],
+    lesson:'O maior produto da Uber não é o carro — é a confiança de que em 4 minutos um carro aparece. Toda a estratégia de marketing foi construída para reforçar essa promessa uma vez por vez.'
+  }
+};
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded",function(){
+  // Handle any case opened before full load
+  if(_pendingCase){ var pc=_pendingCase; _pendingCase=null; openCase(pc); }
+
+  // Init all renders
+  renderChannelDiag();
+  renderOmniMaturity();
+  renderStageGrid();
+  renderEmotionTrack();
+  renderGapAnalysis();
+  renderActivationBlocks();
+  renderBudgetChannels();
+  renderMetrics();
+  renderKPITable();
+  renderComparisonTable();
+  renderProgressList();
+  wireSWOTPreviews();
+  setTip(1);
+  startAutoSave();
+  checkProfMode();
+});
+
+/* ══════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════ */
+function goTo(n){
+  currentPhase = n;
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-'+n).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function(t,i){
+    t.classList.remove('active');
+    if(i+1===n) t.classList.add('active');
+  });
+  setTip(n);
+  if(n===6) updateSummary();
+}
+
+function completePhase(from,to){
+  document.getElementById('tab-'+from).classList.add('done');
+  totalScore += 150;
+  document.getElementById('score-display').textContent = totalScore;
+  goTo(to);
+}
+
+function setTip(n){ document.getElementById('phase-tip').textContent = phaseTips[n-1]; }
+
+/* ══════════════════════════════════════
+   CHANNEL DIAGNOSIS
+══════════════════════════════════════ */
+var diagChannels = [
+  {name:'Loja Física / PDV',type:'off'},{name:'Outdoor / Mídia Impressa',type:'off'},
+  {name:'Eventos / Feiras',type:'off'},{name:'Televendas / SAC',type:'off'},
+  {name:'Website / Blog',type:'dig'},{name:'Redes Sociais',type:'dig'},
+  {name:'Email Marketing',type:'dig'},{name:'Google (SEO + Ads)',type:'dig'},
+  {name:'WhatsApp Business',type:'dig'},{name:'App Próprio',type:'dig'},
+  {name:'Marketplace (MercadoLivre etc)',type:'dig'},{name:'CRM / Automação',type:'dig'}
+];
+
+function renderChannelDiag(){
+  var c = document.getElementById('channel-diag');
+  c.innerHTML = diagChannels.map(function(ch,i){
+    return '<div style="display:grid;grid-template-columns:160px 1fr 90px 90px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line);">' +
+      '<div style="font-size:12px;font-weight:500;color:var(--mid);display:flex;align-items:center;gap:7px;">' +
+        '<span style="width:8px;height:8px;border-radius:50%;background:'+(ch.type==='off'?'var(--red)':'var(--blue)')+'"></span>'+ch.name+'</div>' +
+      '<input class="finput" type="text" placeholder="Descreva brevemente a situação atual..." style="font-size:11px;padding:5px 8px;">' +
+      '<select style="width:100%;background:var(--surf);border:1px solid var(--border);font-size:11px;color:var(--dark);padding:5px;outline:none;margin:0 4px;" onchange="updateDiagScore(this)">' +
+        '<option value="">—</option><option value="1">1 — Ausente</option><option value="2">2 — Básico</option>' +
+        '<option value="3">3 — Médio</option><option value="4">4 — Bom</option><option value="5">5 — Excelente</option>' +
+      '</select>' +
+      '<div style="text-align:center;padding-left:4px;">' +
+        '<span class="tag '+(ch.type==='off'?'tag-off':'tag-dig')+'" style="font-size:9px;">'+(ch.type==='off'?'OFF-LINE':'DIGITAL')+'</span>' +
+      '</div></div>';
+  }).join('');
+}
+
+function updateDiagScore(sel){
+  totalScore += 5;
+  document.getElementById('score-display').textContent = totalScore;
+}
+
+/* ══════════════════════════════════════
+   OMNI MATURITY
+══════════════════════════════════════ */
+var omniDims = [
+  {label:'Visão 360° do Cliente',desc:'Os dados de todos os canais estão unificados?'},
+  {label:'Integração de Estoque',desc:'O estoque físico e digital é o mesmo, em tempo real?'},
+  {label:'Continuidade da Jornada',desc:'O cliente pode começar num canal e terminar em outro sem repetir informações?'},
+  {label:'Consistência de Mensagem',desc:'A comunicação é igual em todos os pontos de contato?'},
+  {label:'Personalização Cross-channel',desc:'A marca reconhece o histórico do cliente independente do canal?'}
+];
+
+function renderOmniMaturity(){
+  var c = document.getElementById('omni-maturity');
+  c.innerHTML = omniDims.map(function(d){
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:3px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
+        '<div><div style="font-size:13px;font-weight:600;color:var(--dark);">'+d.label+'</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+d.desc+'</div></div>' +
+        '<div style="display:flex;gap:4px;flex-shrink:0;">'+
+          [1,2,3,4,5].map(function(n){
+            return '<label style="cursor:pointer;"><input type="radio" name="omni-'+d.label.replace(/\s/g,'')+'" value="'+n+'" style="display:none;" onchange="scoreOmni(this)"><span style="display:block;width:28px;height:28px;border:1px solid var(--border);text-align:center;line-height:26px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;border-radius:2px;" class="omni-btn">'+n+'</span></label>';
+          }).join('')+
+        '</div>' +
+      '</div></div>';
+  }).join('');
+  document.querySelectorAll('input[type=radio]').forEach(function(r){
+    r.addEventListener('change',function(){
+      var name = this.name;
+      document.querySelectorAll('input[name="'+name+'"]').forEach(function(x){
+        x.nextElementSibling.style.background = '';
+        x.nextElementSibling.style.color = 'var(--dark)';
+        x.nextElementSibling.style.borderColor = 'var(--border)';
+      });
+      this.nextElementSibling.style.background = 'var(--red)';
+      this.nextElementSibling.style.color = '#fff';
+      this.nextElementSibling.style.borderColor = 'var(--red)';
+    });
+  });
+}
+
+function scoreOmni(el){
+  totalScore += 8;
+  document.getElementById('score-display').textContent = totalScore;
+}
+
+/* ══════════════════════════════════════
+   STAGE GRID (JOURNEY MAP)
+══════════════════════════════════════ */
+function renderStageGrid(){
+  var c = document.getElementById('stage-grid');
+  c.innerHTML = stageData.map(function(st){
+    var tpPills = st.tps.map(function(tp,i){
+      var key = st.id+'_'+i;
+      return '<span class="tp-pill" data-key="'+key+'" onclick="cycleTp(\''+key+'\',this)">'+tp+'</span>';
+    }).join('');
+    return '<div class="jstage">' +
+      '<div class="jstage-head">' +
+        '<div class="jstage-letter">'+st.letter+'</div>' +
+        '<div class="jstage-name">'+st.name+'</div>' +
+        '<div class="jstage-eng">'+st.en+'</div>' +
+      '</div>' +
+      '<div class="jstage-body">' +
+        '<div class="jstage-field"><label>Touchpoints Ativos</label><div class="tp-pills">'+tpPills+'</div></div>' +
+        '<div class="jstage-field"><label>Descrição da Experiência</label><textarea placeholder="O que '+st.en.toLowerCase()+' significa para sua persona neste contexto..."></textarea></div>' +
+        '<div class="jstage-field"><label>Canal Prioritário</label><input type="text" placeholder="Ex: WhatsApp + atendimento presencial"></div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function cycleTp(key, el){
+  var cur = tpState[key]||0;
+  var next = (cur+1)%4;
+  tpState[key] = next;
+  el.className = 'tp-pill';
+  if(next===1) el.classList.add('on-off');
+  else if(next===2) el.classList.add('on-dig');
+  else if(next===3) el.classList.add('on-hyb');
+  if(next>0 && !el.dataset.scored){el.dataset.scored='1';totalScore+=5;document.getElementById('score-display').textContent=totalScore;}
+  updateSummaryTP();
+}
+
+function updateSummaryTP(){
+  var count = Object.values(tpState).filter(function(v){return v>0;}).length;
+  var el = document.getElementById('sum-tp');
+  if(el) el.textContent = count + ' touchpoints ativados';
+}
+
+/* ══════════════════════════════════════
+   EMOTION TRACK
+══════════════════════════════════════ */
+function renderEmotionTrack(){
+  var c = document.getElementById('emotion-track');
+  c.innerHTML = stageData.map(function(st){
+    return '<div class="emo-cell">' +
+      '<div class="emo-stage">'+st.name+'</div>' +
+      '<select class="emo-select">' +
+        '<option value="">Emoção...</option>' +
+        emotions.map(function(e){return '<option>'+e+'</option>';}).join('') +
+      '</select>' +
+      '<textarea class="emo-note" placeholder="Causa principal desta emoção na jornada..."></textarea>' +
+    '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   GAP ANALYSIS
+══════════════════════════════════════ */
+function renderGapAnalysis(){
+  var c = document.getElementById('gap-analysis');
+  c.innerHTML = stageData.map(function(st){
+    return '<div class="gap-row" style="display:grid;grid-template-columns:100px 80px 1fr 1fr;gap:8px;align-items:start;padding:10px 14px;border-bottom:1px solid var(--line);">' +
+      '<div class="gap-stage-tag">'+st.name+'</div>' +
+      '<select class="gap-score-sel" onchange="updateGapScore(this)">' +
+        '<option value="">—</option>' +
+        [1,2,3,4,5].map(function(n){return '<option value="'+n+'">'+n+' / 5</option>';}).join('') +
+      '</select>' +
+      '<textarea style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Cliente não encontra informações de preço online antes de ir à loja física." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+      '<textarea style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Frustração que leva ao abandono. Persona prefere ir ao concorrente que tem app com catálogo." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+    '</div>';
+  }).join('');
+}
+
+function updateGapScore(sel){
+  totalScore += 10;
+  document.getElementById('score-display').textContent = totalScore;
+}
+
+/* ══════════════════════════════════════
+   ACTIVATION BLOCKS
+══════════════════════════════════════ */
+var actOpen = [true,false,false,false,false];
+
+function renderActivationBlocks(){
+  var c = document.getElementById('activation-blocks');
+  c.innerHTML = stageData.map(function(st,i){
+    return '<div class="act-block">' +
+      '<div class="act-head" onclick="toggleAct('+i+')">' +
+        '<div class="act-title"><span class="act-stage-dot"></span>'+st.name+' — '+st.en+'</div>' +
+        '<div class="act-tags"><span class="act-badge badge-none" id="act-badge-'+i+'">Preencher</span><span class="act-chevron'+(actOpen[i]?' open':'')+'" id="act-chev-'+i+'">▼</span></div>' +
+      '</div>' +
+      '<div class="act-body'+(actOpen[i]?'':' hidden')+'" id="act-body-'+i+'">' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">Ativação Principal</div>' +
+          '<textarea class="finput" placeholder="Descreva a ativação concreta. Ex: Campanha de OOH no raio de 2km + Stories segmentados por geolocalização com oferta exclusiva para novos clientes." style="min-height:60px;" oninput="scoreAct('+i+')"></textarea>' +
+        '</div>' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">Tipo de Canal</div>' +
+          '<select class="finput" onchange="updateActBadge('+i+',this.value)">' +
+            '<option value="">Selecione</option><option value="off">Off-line</option><option value="dig">Digital</option><option value="hyb">Híbrido (Off + Digital)</option>' +
+          '</select>' +
+        '</div>' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">Mensagem Central para a Persona</div>' +
+          '<textarea class="finput" placeholder="O que você quer que a persona pense, sinta ou faça após este touchpoint?" style="min-height:48px;"></textarea>' +
+        '</div>' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">Objetivo Específico (SMART)</div>' +
+          '<input class="finput" type="text" placeholder="Ex: Aumentar o alcance em 25% no raio de 5km em 60 dias">' +
+        '</div>' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">KPI Principal</div>' +
+          '<input class="finput" type="text" placeholder="Ex: Alcance, CPM, taxa de clique, conversão, NPS">' +
+        '</div>' +
+        '<div class="f-wrap">' +
+          '<div class="f-lbl">Integração com Próxima Etapa</div>' +
+          '<textarea class="finput" placeholder="Como este touchpoint leva a persona para a próxima fase da jornada? O que é o gatilho de transição?" style="min-height:48px;"></textarea>' +
+        '</div>' +
+      '</div></div>';
+  }).join('');
+}
+
+function toggleAct(i){
+  var body = document.getElementById('act-body-'+i);
+  var chev = document.getElementById('act-chev-'+i);
+  var open = !body.classList.contains('hidden');
+  body.classList.toggle('hidden',open);
+  chev.classList.toggle('open',!open);
+}
+
+function updateActBadge(i,val){
+  var b = document.getElementById('act-badge-'+i);
+  b.className='act-badge';
+  if(val==='off'){b.classList.add('badge-off');b.textContent='OFF-LINE';}
+  else if(val==='dig'){b.classList.add('badge-dig');b.textContent='DIGITAL';}
+  else if(val==='hyb'){b.classList.add('badge-hyb');b.textContent='HÍBRIDO';}
+  else{b.classList.add('badge-none');b.textContent='Preencher';}
+}
+
+function scoreAct(i){
+  var key='act_scored_'+i;
+  if(!window[key]){window[key]=true;totalScore+=20;document.getElementById('score-display').textContent=totalScore;}
+}
+
+/* ══════════════════════════════════════
+   BUDGET
+══════════════════════════════════════ */
+function renderBudgetChannels(){
+  renderChGroup('ch-off', channels_off);
+  renderChGroup('ch-dig', channels_dig);
+  updateBudget();
+}
+
+function renderChGroup(id, chs){
+  var c = document.getElementById(id);
+  c.innerHTML = chs.map(function(ch){
+    return '<div class="ch-row">' +
+      '<div class="ch-name"><span class="ch-dot '+(channels_off.find(function(x){return x.id===ch.id;})?'ch-off':'ch-dig')+'"></span>'+ch.name+'</div>' +
+      '<input type="range" min="0" max="'+ch.max+'" step="500" value="0" oninput="onSlider(\''+ch.id+'\',+this.value,this)" id="sl-'+ch.id+'">' +
+      '<div class="ch-val" id="cv-'+ch.id+'">R$0</div>' +
+    '</div>';
+  }).join('');
+}
+
+function onSlider(id,val,el){
+  var total = Object.values(budgetState).reduce(function(a,b){return a+b;},0) - (budgetState[id]||0) + val;
+  if(total>100000){val = 100000 - (Object.values(budgetState).reduce(function(a,b){return a+b;},0) - (budgetState[id]||0));val=Math.max(0,val);el.value=val;}
+  budgetState[id]=val;
+  document.getElementById('cv-'+id).textContent='R$'+(val>=1000?(val/1000).toFixed(0)+'k':val);
+  updateBudget();
+}
+
+function updateBudget(){
+  var spent = Object.values(budgetState).reduce(function(a,b){return a+b;},0);
+  var left = 100000 - spent;
+  document.getElementById('b-spent').textContent='R$'+spent.toLocaleString('pt-BR');
+  document.getElementById('b-left').textContent='R$'+left.toLocaleString('pt-BR');
+  document.getElementById('b-pct').textContent=Math.round(spent/1000)+'% do orçamento';
+  document.getElementById('b-track').style.width=Math.round(spent/1000)+'%';
+  calcMetrics(spent);
+}
+
+function calcMetrics(spent){
+  if(spent===0){renderMetrics();return;}
+  var cac=0,ltv=0,nps=0;
+  allChannels.forEach(function(ch){
+    var a=budgetState[ch.id]||0;
+    if(a>0){
+      var w=a/spent;
+      cac+=w*ch.cac;ltv+=w*ch.ltv;nps+=w*ch.nps;
+    }
+  });
+  var cacVal=Math.max(15,Math.round(180*cac));
+  var ltvVal=Math.round(cacVal*ltv*3.8);
+  var convRate=Math.min(9.5,Math.max(1.1,(ltv*2.4)).toFixed(1));
+  var npsVal=Math.round(nps*55);
+  var roi=spent>0?Math.round(((ltvVal*(spent/cacVal))-spent)/spent*100):0;
+  var digSpent=Object.entries(budgetState).filter(function(e){return channels_dig.find(function(c){return c.id===e[0];});}).reduce(function(a,b){return a+b[1];},0);
+  var offSpent=spent-digSpent;
+  window._metrics={cac:cacVal,ltv:ltvVal,conv:convRate,nps:npsVal,roi:roi,spent:spent,dig:digSpent,off:offSpent};
+
+  var mdata=[
+    {n:'CAC',v:'R$'+cacVal,q:cacVal<60?'good':cacVal<120?'warn':'bad',d:'custo por cliente'},
+    {n:'LTV (12m)',v:'R$'+ltvVal.toLocaleString('pt-BR'),q:'good',d:'valor de vida'},
+    {n:'Conversão',v:convRate+'%',q:convRate>4.5?'good':convRate>2.5?'warn':'bad',d:'taxa estimada'},
+    {n:'NPS',v:npsVal,q:npsVal>50?'good':npsVal>30?'warn':'bad',d:'promotores líquidos'},
+    {n:'ROI',v:roi+'%',q:roi>200?'good':roi>80?'warn':'bad',d:'retorno anual'},
+    {n:'LTV/CAC',v:(ltvVal/Math.max(1,cacVal)).toFixed(1)+'x',q:(ltvVal/cacVal)>3.5?'good':(ltvVal/cacVal)>2?'warn':'bad',d:'saúde do negócio'}
+  ];
+  var g=document.getElementById('metrics-grid');
+  g.innerHTML=mdata.map(function(m){
+    return '<div class="metric-card"><div class="metric-name">'+m.n+'</div><div class="metric-val '+m.q+'">'+m.v+'</div><div class="metric-delta">'+m.d+'</div></div>';
+  }).join('');
+
+  var digPct=spent>0?Math.round(digSpent/spent*100):0;
+  var insight='';
+  if(digPct>75)insight='<strong>'+digPct+'% digital:</strong> Ótima cobertura online. Verifique se a persona valoriza o contato físico — experiências presenciais têm 5x mais impacto emocional e reduzem churn.';
+  else if(digPct<25)insight='<strong>'+digPct+'% digital:</strong> Com 181M usuários de internet no Brasil passando 9h/dia online, uma presença digital mais forte pode reduzir o CAC significativamente.';
+  else insight='<strong>Mix equilibrado ('+digPct+'% digital / '+(100-digPct)+'% off-line):</strong> Boa integração. Garanta que os canais se comunicam — o cliente que vê o outdoor deve encontrar o mesmo desconto no site.';
+  document.getElementById('budget-insight').innerHTML='<div class="callout-label gold">💡 Insight do Simulador</div>'+insight;
+}
+
+function renderMetrics(){
+  var g=document.getElementById('metrics-grid');
+  g.innerHTML=['CAC','LTV (12m)','Conversão','NPS','ROI','LTV/CAC'].map(function(n){
+    return '<div class="metric-card"><div class="metric-name">'+n+'</div><div class="metric-val" style="color:var(--dim);">—</div><div class="metric-delta">aloque orçamento</div></div>';
+  }).join('');
+}
+
+function resetBudget(){
+  allChannels.forEach(function(c){budgetState[c.id]=0;var el=document.getElementById('sl-'+c.id);if(el)el.value=0;var cv=document.getElementById('cv-'+c.id);if(cv)cv.textContent='R$0';});
+  updateBudget();
+}
+
+/* ══════════════════════════════════════
+   SWOT CRUZADA
+══════════════════════════════════════ */
+var swotActions = []; // {id, quadrant, text, defaultPriority}
+var swotActionId = 0;
+
+var swotTypeConfig = {
+  SO:{label:'SO',bg:'var(--green-faint)',color:'var(--green)',border:'var(--green-mid)'},
+  WO:{label:'WO',bg:'var(--gold-faint)',color:'var(--gold)',border:'var(--gold-mid)'},
+  ST:{label:'ST',bg:'var(--blue-faint)',color:'var(--blue)',border:'var(--blue-mid)'},
+  WT:{label:'WT',bg:'var(--red-faint)',color:'var(--red)',border:'var(--red-mid)'}
+};
+
+function addSwotAction(quadrant, defaultPriority, colorVar, label){
+  var id = 'sa-'+(swotActionId++);
+  var cfg = swotTypeConfig[quadrant.toUpperCase()];
+  var container = document.getElementById('swot-'+quadrant+'-actions');
+  var div = document.createElement('div');
+  div.className = 'swot-action-item';
+  div.id = id;
+  div.innerHTML =
+    '<div class="sai-header">' +
+      '<span class="sai-type" style="background:'+cfg.bg+';color:'+cfg.color+';border:1px solid '+cfg.border+';">'+cfg.label+'</span>' +
+      '<span style="font-size:10px;color:var(--muted);">Descreva a ação estratégica</span>' +
+    '</div>' +
+    '<input class="sai-input" type="text" placeholder="Ex: Lançar programa de fidelidade aproveitando atendimento próximo + crescimento do WhatsApp Commerce..." ' +
+      'onchange="updateSwotActionText(\''+id+'\',\''+quadrant.toUpperCase()+'\',\''+defaultPriority+'\',this.value)">' +
+    '<button class="sai-del" onclick="removeSwotAction(\''+id+'\',\''+quadrant+'\')">✕</button>';
+  container.appendChild(div);
+  updateSwotCount();
+  totalScore += 15;
+  document.getElementById('score-display').textContent = totalScore;
+  // register in array
+  swotActions.push({id:id, quadrant:quadrant.toUpperCase(), text:'', defaultPriority:defaultPriority});
+}
+
+function updateSwotActionText(id, quadrant, priority, text){
+  var item = swotActions.find(function(a){return a.id===id;});
+  if(item) item.text = text;
+  // live-update SWOT previews
+  updateSwotPreviews();
+}
+
+function removeSwotAction(id, quadrant){
+  var el = document.getElementById(id);
+  if(el) el.remove();
+  swotActions = swotActions.filter(function(a){return a.id!==id;});
+  updateSwotCount();
+}
+
+function updateSwotCount(){
+  var el = document.getElementById('swot-action-count');
+  if(el) el.textContent = swotActions.length;
+}
+
+// Live-preview SWOT quadrant headers
+function updateSwotPreviews(){
+  var fields = {s:'swot-s-preview',w:'swot-w-preview',o:'swot-o-preview',t:'swot-t-preview'};
+  var ids = {s:'swot-s',w:'swot-w',o:'swot-o',t:'swot-t'};
+  Object.keys(ids).forEach(function(k){
+    var ta = document.getElementById(ids[k]);
+    var prev = document.getElementById(fields[k]);
+    if(ta && prev){
+      var val = ta.value.trim();
+      prev.textContent = val ? val.substring(0,60)+(val.length>60?'…':'') : 'Preencha na seção 2.2';
+      prev.style.fontStyle = val ? 'normal' : 'italic';
+    }
+  });
+}
+
+// Wire SWOT textareas to update previews live
+function wireSWOTPreviews(){
+  ['s','w','o','t'].forEach(function(k){
+    var ta = document.getElementById('swot-'+k);
+    if(ta) ta.addEventListener('input', updateSwotPreviews);
+  });
+}
+
+/* ── EXPORT TO PHASE 5 ── */
+function exportSwotToActionPlan(){
+  var filled = swotActions.filter(function(a){return a.text.trim()!=='';});
+  if(filled.length === 0){
+    alert('Adicione pelo menos uma ação com texto antes de exportar.');
+    return;
+  }
+  // merge: keep existing manual actions, add new swot ones not yet there
+  filled.forEach(function(sa){
+    if(!planActions.find(function(p){return p.swotId===sa.id;})){
+      planActions.push({
+        swotId: sa.id,
+        quadrant: sa.quadrant,
+        text: sa.text,
+        resp: '',
+        prazo: sa.defaultPriority==='Alta'?'30 dias':sa.defaultPriority==='Média'?'60 dias':'90 dias',
+        impacto: '',
+        custo: '',
+        importancia: '',
+        score: null
+      });
+    }
+  });
+  renderPlanActions();
+  // show success feedback
+  var btn = event.target;
+  btn.textContent = '✓ Exportado!';
+  btn.style.background = 'var(--green-lt)';
+  setTimeout(function(){ btn.textContent='↗ Exportar Ações para Fase 5'; btn.style.background=''; }, 2000);
+  totalScore += 50;
+  document.getElementById('score-display').textContent = totalScore;
+}
+
+/* ══════════════════════════════════════
+   ACTION PLAN (PHASE 5 — PRIORITY TABLE)
+══════════════════════════════════════ */
+var planActions = []; // populated from SWOT export or manually
+
+function addManualAction(){
+  planActions.push({
+    swotId: null,
+    quadrant: 'MAN',
+    text: '',
+    resp: '',
+    prazo: '',
+    impacto: '',
+    custo: '',
+    importancia: '',
+    score: null
+  });
+  renderPlanActions();
+}
+
+function renderPlanActions(filterQ){
+  var empty = document.getElementById('action-empty-state');
+  var wrap  = document.getElementById('action-table-wrap');
+  var list  = document.getElementById('action-list');
+
+  if(planActions.length === 0){
+    empty.style.display = 'block';
+    wrap.style.display  = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  wrap.style.display  = 'block';
+
+  var toShow = filterQ && filterQ!=='all'
+    ? planActions.filter(function(a){return a.quadrant===filterQ;})
+    : planActions;
+
+  list.innerHTML = toShow.map(function(action, i){
+    var realIdx = planActions.indexOf(action);
+    var cfg = swotTypeConfig[action.quadrant] || {label:action.quadrant,bg:'var(--line)',color:'var(--muted)',border:'var(--border)'};
+    var sc = action.score !== null ? action.score.toFixed(1) : '—';
+    var scColor = action.score===null?'var(--dim)':action.score>=7?'var(--green)':action.score>=5?'var(--gold)':'var(--red)';
+    var scBg    = action.score===null?'var(--line)':action.score>=7?'var(--green-faint)':action.score>=5?'var(--gold-faint)':'var(--red-faint)';
+    return '<div class="action-row" id="ar-'+realIdx+'" draggable="true" ondragstart="dragStart(event,'+realIdx+')" ondragover="dragOver(event)" ondrop="dragDrop(event,'+realIdx+')">' +
+      '<span class="ar-drag" title="Arraste para reordenar">⠿</span>' +
+      '<span class="ar-type" style="background:'+cfg.bg+';color:'+cfg.color+';border:1px solid '+cfg.border+';">'+cfg.label+'</span>' +
+      '<input class="ar-input" type="text" value="'+escHtml(action.text)+'" placeholder="Descreva a ação estratégica..." ' +
+        'oninput="planActions['+realIdx+'].text=this.value">' +
+      '<input class="ar-input" type="text" value="'+escHtml(action.resp)+'" placeholder="Quem lidera?" ' +
+        'oninput="planActions['+realIdx+'].resp=this.value">' +
+      '<input class="ar-input" type="text" value="'+escHtml(action.prazo)+'" placeholder="Ex: 30 dias" ' +
+        'oninput="planActions['+realIdx+'].prazo=this.value">' +
+      '<input class="ar-score-input" type="number" min="0" max="10" value="'+escHtml(action.impacto)+'" placeholder="0–10" ' +
+        'title="Impacto no negócio (0=nenhum, 10=transformacional)" ' +
+        'oninput="planActions['+realIdx+'].impacto=+this.value;recalcScore('+realIdx+')">' +
+      '<input class="ar-score-input" type="number" min="0" max="10" value="'+escHtml(action.custo)+'" placeholder="0–10" ' +
+        'title="Viabilidade de custo (0=muito caro, 10=quase gratuito)" ' +
+        'oninput="planActions['+realIdx+'].custo=+this.value;recalcScore('+realIdx+')">' +
+      '<input class="ar-score-input" type="number" min="0" max="10" value="'+escHtml(action.importancia)+'" placeholder="0–10" ' +
+        'title="Importância estratégica (0=irrelevante, 10=crítica)" ' +
+        'oninput="planActions['+realIdx+'].importancia=+this.value;recalcScore('+realIdx+')">' +
+      '<span class="ar-score-badge" id="sc-'+realIdx+'" style="background:'+scBg+';color:'+scColor+';">'+sc+'</span>' +
+      '<button class="ar-del" onclick="removeAction('+realIdx+')" title="Remover ação">✕</button>' +
+    '</div>';
+  }).join('');
+
+  updateMatrix();
+}
+
+function recalcScore(idx){
+  var a = planActions[idx];
+  var imp = parseFloat(a.impacto)||0;
+  var cst = parseFloat(a.custo)||0;
+  var imp2 = parseFloat(a.importancia)||0;
+  if(imp===0 && cst===0 && imp2===0){ a.score=null; }
+  else { a.score = (imp*0.45)+(cst*0.25)+(imp2*0.30); }
+  // update badge inline without full re-render
+  var badge = document.getElementById('sc-'+idx);
+  if(badge){
+    var sc = a.score !== null ? a.score.toFixed(1) : '—';
+    var scColor = a.score===null?'var(--dim)':a.score>=7?'var(--green)':a.score>=5?'var(--gold)':'var(--red)';
+    var scBg    = a.score===null?'var(--line)':a.score>=7?'var(--green-faint)':a.score>=5?'var(--gold-faint)':'var(--red-faint)';
+    badge.textContent = sc;
+    badge.style.color = scColor;
+    badge.style.background = scBg;
+  }
+  updateMatrix();
+}
+
+function removeAction(idx){
+  planActions.splice(idx,1);
+  renderPlanActions();
+  updateMatrix();
+}
+
+function sortActions(by){
+  if(by==='score'){
+    planActions.sort(function(a,b){
+      return (b.score||0)-(a.score||0);
+    });
+  }
+  renderPlanActions();
+}
+
+function filterActions(q, btn){
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  renderPlanActions(q==='all'?null:q);
+}
+
+/* ── DRAG & DROP ── */
+var dragSrcIdx = null;
+function dragStart(e,idx){ dragSrcIdx=idx; e.dataTransfer.effectAllowed='move'; }
+function dragOver(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; }
+function dragDrop(e,targetIdx){
+  e.preventDefault();
+  if(dragSrcIdx===null||dragSrcIdx===targetIdx)return;
+  var moved = planActions.splice(dragSrcIdx,1)[0];
+  planActions.splice(targetIdx,0,moved);
+  dragSrcIdx=null;
+  renderPlanActions();
+}
+
+/* ── 2×2 MATRIX ── */
+function updateMatrix(){
+  ['HH','HL','LH','LL'].forEach(function(q){
+    var el=document.getElementById('quad-'+q+'-items');
+    if(el)el.innerHTML='';
+  });
+  planActions.forEach(function(a){
+    if(a.score===null) return;
+    var imp=parseFloat(a.impacto)||0;
+    var cst=parseFloat(a.custo)||0;
+    var highImp = imp>=5;
+    var highVia = cst>=5;
+    var quadKey = (highImp?'H':'L')+(highVia?'H':'L');
+    var el=document.getElementById('quad-'+quadKey+'-items');
+    if(el){
+      var div=document.createElement('div');
+      div.className='quad-item';
+      div.textContent=(a.text||'Ação sem descrição').substring(0,48)+(a.text.length>48?'…':'');
+      el.appendChild(div);
+    }
+  });
+}
+
+/* ── HELPERS ── */
+function escHtml(v){ return (v||'').toString().replace(/"/g,'&quot;'); }
+
+function renderActionPlan(){ /* legacy — kept for compat */ }
+function addActionRow(){ addManualAction(); }
+
+/* ══════════════════════════════════════
+   KPI TABLE
+══════════════════════════════════════ */
+function renderKPITable(){
+  var c=document.getElementById('kpi-table');
+  var rows=[
+    {stage:'Aware',hint:'Alcance, CPM, Impressões'},
+    {stage:'Appeal',hint:'Engajamento, Taxa clique'},
+    {stage:'Ask',hint:'Tempo no site, Leads'},
+    {stage:'Act',hint:'Taxa conversão, CAC'},
+    {stage:'Advocate',hint:'NPS, Taxa recompra, LTV'}
+  ];
+  c.innerHTML=rows.map(function(r){
+    return '<div style="display:grid;grid-template-columns:120px 1fr 100px 100px;gap:8px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);">' +
+      '<span style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--red);">'+r.stage+'</span>' +
+      '<input style="background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 8px;width:100%;outline:none;" placeholder="'+r.hint+'" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+      '<input style="background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 8px;width:100%;outline:none;" placeholder="Meta 6m" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+      '<input style="background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 8px;width:100%;outline:none;" placeholder="Meta 12m" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'">' +
+    '</div>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   COMPARISON TABLE
+══════════════════════════════════════ */
+var cmpDims=['Touchpoints Prioritários','Canal de Fidelização','Integração de Dados','Estratégia de Conteúdo','Métrica Chave de Sucesso','Principal Gap a Resolver'];
+
+function renderComparisonTable(){
+  var tb=document.getElementById('cmp-tbody');
+  tb.innerHTML=cmpDims.map(function(d){
+    return '<tr><td style="font-weight:600;font-size:12px;color:var(--dark);">'+d+'</td>' +
+      '<td><input style="background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;width:100%;outline:none;" placeholder="Como o case fez..." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></td>' +
+      '<td><input style="background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;width:100%;outline:none;" placeholder="Nossa proposta..." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></td>' +
+      '<td><select style="width:100%;background:var(--surf);border:1px solid var(--border);font-size:10px;color:var(--dark);padding:4px;outline:none;"><option value="">—</option><option value="y">Viável já</option><option value="p">Viável adaptado</option><option value="n">Inviável agora</option></select></td>' +
+    '</tr>';
+  }).join('');
+}
+
+/* ══════════════════════════════════════
+   PROGRESS LIST
+══════════════════════════════════════ */
+function renderProgressList(){
+  var c=document.getElementById('progress-list');
+  c.innerHTML=progressItems.map(function(item){
+    var done=checkedItems[item.id]||false;
+    return '<div class="progress-item'+(done?' done':'')+'" id="pi-'+item.id+'" onclick="toggleProgress(\''+item.id+'\')">'+
+      '<div class="chk-box'+(done?' checked':'')+'" id="chkb-'+item.id+'"></div>'+
+      '<span>'+item.text+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function toggleProgress(id){
+  checkedItems[id]=!checkedItems[id];
+  var done=checkedItems[id];
+  document.getElementById('pi-'+id).className='progress-item'+(done?' done':'');
+  document.getElementById('chkb-'+id).className='chk-box'+(done?' checked':'');
+  if(done){totalScore+=15;document.getElementById('score-display').textContent=totalScore;}
+}
+
+/* ══════════════════════════════════════
+   TIMER
+══════════════════════════════════════ */
+function startTimer(m){
+  stopTimer();
+  timerSecs=m*60;
+  showTimer();
+  timerInt=setInterval(function(){
+    timerSecs--;
+    showTimer();
+    var d=document.getElementById('timer-disp');
+    if(timerSecs<=60)d.style.background='var(--red-dk)';
+    else d.style.background='var(--red)';
+    if(timerSecs<=0){stopTimer();d.textContent='00:00';}
+  },1000);
+}
+function stopTimer(){if(timerInt){clearInterval(timerInt);timerInt=null;}}
+function showTimer(){
+  var m=Math.floor(timerSecs/60),s=timerSecs%60;
+  document.getElementById('timer-disp').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+}
+
+/* ══════════════════════════════════════
+   GROUP / SYNC
+══════════════════════════════════════ */
+function updateGroup(v){
+  document.getElementById('group-label').textContent=v?'GRUPO: '+v.toUpperCase():'GRUPO —';
+}
+
+function syncBrand(){
+  var n=document.getElementById('brand-name').value;
+  var s=document.getElementById('brand-sector').value;
+  document.getElementById('sum-brand').textContent=n||'—';
+  document.getElementById('sum-sector').textContent=s||'—';
+}
+
+function syncPersona(){
+  var n=document.getElementById('persona-name').value;
+  document.getElementById('sum-persona').textContent=n||'—';
+  var disp=document.getElementById('persona-name-display');
+  if(disp)disp.textContent=n?n:'a persona';
+}
+
+/* ══════════════════════════════════════
+   SUMMARY (FASE 6)
+══════════════════════════════════════ */
+function updateSummary(){
+  var bn=document.getElementById('brand-name');var bs=document.getElementById('brand-sector');
+  var pn=document.getElementById('persona-name');var ch=document.getElementById('brand-challenge');
+  var cr=document.getElementById('case-ref');var bj=document.getElementById('budget-justification');
+  if(bn)document.getElementById('sum-brand').textContent=bn.value||'—';
+  if(bs)document.getElementById('sum-sector').textContent=bs.value||'—';
+  if(pn)document.getElementById('sum-persona').textContent=pn.value||'—';
+  if(ch)document.getElementById('sum-challenge').textContent=(ch.value||'').substring(0,80)||(ch.value?'—':'—');
+  if(cr)document.getElementById('sum-case').textContent=cr.value||'—';
+  updateSummaryTP();
+  var m=window._metrics||{};
+  if(m.spent){
+    document.getElementById('sum-budget').textContent='R$'+m.spent.toLocaleString('pt-BR');
+    document.getElementById('sum-mix').textContent=Math.round(m.dig/m.spent*100)+'% digital / '+Math.round(m.off/m.spent*100)+'% off-line';
+    document.getElementById('sum-cac').textContent='R$'+(m.cac||'—');
+    document.getElementById('sum-ltv').textContent='R$'+((m.ltv||0).toLocaleString('pt-BR'));
+    document.getElementById('sum-nps').textContent=m.nps||'—';
+    document.getElementById('sum-roi').textContent=(m.roi||'—')+'%';
+  }
+}
+
+/* ══════════════════════════════════════
+   SCORING
+══════════════════════════════════════ */
+function calcScore(){
+  var weights=[0.15,0.15,0.25,0.20,0.15,0.10];
+  var total=0;
+  for(var i=1;i<=6;i++){
+    var el=document.getElementById('e'+i);
+    var v=Math.min(10,Math.max(0,parseFloat(el.value)||0));
+    total+=v*weights[i-1];
+  }
+  total=total.toFixed(1);
+  document.getElementById('final-score').textContent=total;
+  var pill=document.getElementById('grade-pill');
+  if(total>=9.0){pill.style.background='var(--green)';pill.style.color='#fff';pill.textContent='EXCELÊNCIA';}
+  else if(total>=8.0){pill.style.background='var(--blue)';pill.style.color='#fff';pill.textContent='MUITO BOM';}
+  else if(total>=7.0){pill.style.background='var(--green-lt)';pill.style.color='#fff';pill.textContent='APROVADO';}
+  else if(total>=5.0){pill.style.background='var(--gold)';pill.style.color='#fff';pill.textContent='RECUPERAÇÃO';}
+  else{pill.style.background='var(--red)';pill.style.color='#fff';pill.textContent='REPROVADO';}
+}
+
+/* ══════════════════════════════════════
+   CASE MODAL
+══════════════════════════════════════ */
+function openCase(id){
+  var c=caseData[id];if(!c)return;
+  document.getElementById('modal-title').textContent=c.title;
+  document.getElementById('modal-sub').textContent=c.sub;
+  var kpisHtml='<div class="case-kpi-row">'+c.kpis.map(function(k){
+    return '<div class="case-kpi"><span class="case-kpi-val">'+k.v+'</span><span class="case-kpi-lbl">'+k.l+'</span></div>';
+  }).join('')+'</div>';
+  var strategiesHtml='<div class="case-strategy-list">'+c.strategies.map(function(s){
+    return '<div class="case-strat-item"><div class="strat-icon">'+s.icon+'</div><div class="strat-text"><div class="strat-title">'+s.title+'</div><div class="strat-desc">'+s.desc+'</div></div></div>';
+  }).join('')+'</div>';
+  document.getElementById('modal-body').innerHTML=
+    '<div class="case-section"><div class="case-section-title">Contexto</div><p style="font-size:13px;color:var(--mid);line-height:1.7;">'+c.context+'</p></div>' +
+    '<div class="case-section"><div class="case-section-title">Indicadores-Chave</div>'+kpisHtml+'</div>' +
+    '<div class="case-section"><div class="case-section-title">Estratégias Aplicadas</div>'+strategiesHtml+'</div>' +
+    '<div class="case-section"><div class="case-section-title">Principal Aprendizado</div><div class="case-lesson"><strong>💡 Insight para seu grupo:</strong> '+c.lesson+'</div></div>' +
+    '<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);background:var(--red-faint);border-left:3px solid var(--red);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;"><strong style="color:var(--red);">⚠️ Lembrete:</strong> Este case é referência, não resposta. Adapte os aprendizados para a realidade e escala da marca que vocês estão analisando.</div>';
+  document.getElementById('modal-overlay').classList.add('open');
+  totalScore+=20;
+  document.getElementById('score-display').textContent=totalScore;
+}
+
+
+/* ══════════════════════════════════════
+   SUPABASE INTEGRATION
+══════════════════════════════════════ */
+var SB_URL  = 'https://rvxmcvjgquiocmaqajxx.supabase.co';
+var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2eG1jdmpncXVpb2NtYXFhanh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODYxMDIsImV4cCI6MjA5MzE2MjEwMn0.QmnV158zecB4uMOLcQ5msNA0o6CXQT4nsuIzbWE-1go';
+
+var currentSessionId = null;  // uuid da sessão ativa
+var autoSaveInterval = null;
+var lastSaveTime     = null;
+var saveInProgress   = false;
+var isDirty          = false;   // flag: alguma coisa mudou desde o último save
+
+/* ── Marca dirty em qualquer input da página ── */
+document.addEventListener('input',  function(){ isDirty=true; });
+document.addEventListener('change', function(){ isDirty=true; });
+
+/* ── API helpers ── */
+function sbFetch(path, method, body){
+  // Works from file://, http:// and https://
+  if(window.location.protocol==='file:'){
+    // Supabase can't be reached from file:// due to browser CORS policy.
+    // Host the file on any simple server (e.g. VS Code Live Server, python -m http.server)
+    return Promise.reject(new Error('file:// — use a local server for Supabase sync'));
+  }
+  return fetch(SB_URL+'/rest/v1/'+path, {
+    method: method||'GET',
+    headers:{
+      'apikey': SB_KEY,
+      'Authorization': 'Bearer '+SB_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    },
+    body: body ? JSON.stringify(body) : undefined
+  }).then(function(r){ return r.json(); });
+}
+
+/* ── Coleta todo o estado atual da página ── */
+function collectState(){
+  function val(id){ var e=document.getElementById(id); return e?e.value:''; }
+  function checked(id){ var e=document.getElementById(id); return e?e.checked:false; }
+
+  // touchpoints
+  var tpSnap = {};
+  Object.keys(tpState).forEach(function(k){ if(tpState[k]>0) tpSnap[k]=tpState[k]; });
+
+  return {
+    fase_atual:   currentPhase,
+    score_total:  totalScore,
+    fase1:{
+      brand_name:        val('brand-name'),
+      brand_sector:      val('brand-sector'),
+      brand_size:        val('brand-size'),
+      brand_geo:         val('brand-geo'),
+      brand_value:       val('brand-value'),
+      brand_competitors: val('brand-competitors'),
+      brand_position:    val('brand-position'),
+      brand_challenge:   val('brand-challenge'),
+      persona_name:      val('persona-name'),
+      persona_age:       val('persona-age'),
+      persona_location:  val('persona-location'),
+      persona_channel:   val('persona-channel'),
+      persona_pains:     val('persona-pains'),
+      persona_motivations: val('persona-motivations'),
+      persona_objection: val('persona-objection')
+    },
+    fase2:{
+      swot_s:       val('swot-s'),
+      swot_w:       val('swot-w'),
+      swot_o:       val('swot-o'),
+      swot_t:       val('swot-t'),
+      omni_barrier: val('omni-barrier'),
+      metric_cac:   val('metric-cac'),
+      metric_ltv:   val('metric-ltv'),
+      metric_recompra: val('metric-recompra'),
+      metric_nps:   val('metric-nps')
+    },
+    swot_actions: swotActions,
+    fase3:{
+      touchpoints:  tpSnap
+    },
+    fase4:{
+      budget:       budgetState,
+      justification: val('budget-justification')
+    },
+    fase5:{
+      h1:           val('h1'),
+      h2:           val('h2'),
+      h3:           val('h3'),
+      case_ref:     val('case-ref'),
+      case_learning: val('case-learning')
+    },
+    plan_actions: planActions,
+    fase6:{
+      scores:       [1,2,3,4,5,6].map(function(i){ return val('e'+i); }),
+      feedback_pos: val('feedback-pos'),
+      feedback_neg: val('feedback-neg')
+    }
+  };
+}
+
+/* ── Restaura estado salvo na página ── */
+function applyState(s){
+  if(!s) return;
+  function set(id,v){ var e=document.getElementById(id); if(e&&v!==undefined) e.value=v; }
+
+  // fase 1
+  var f1=s.fase1||{};
+  set('brand-name',f1.brand_name); set('brand-sector',f1.brand_sector);
+  set('brand-size',f1.brand_size); set('brand-geo',f1.brand_geo);
+  set('brand-value',f1.brand_value); set('brand-competitors',f1.brand_competitors);
+  set('brand-position',f1.brand_position); set('brand-challenge',f1.brand_challenge);
+  set('persona-name',f1.persona_name); set('persona-age',f1.persona_age);
+  set('persona-location',f1.persona_location); set('persona-channel',f1.persona_channel);
+  set('persona-pains',f1.persona_pains); set('persona-motivations',f1.persona_motivations);
+  set('persona-objection',f1.persona_objection);
+
+  // fase 2
+  var f2=s.fase2||{};
+  set('swot-s',f2.swot_s); set('swot-w',f2.swot_w);
+  set('swot-o',f2.swot_o); set('swot-t',f2.swot_t);
+  set('omni-barrier',f2.omni_barrier);
+  set('metric-cac',f2.metric_cac); set('metric-ltv',f2.metric_ltv);
+  set('metric-recompra',f2.metric_recompra); set('metric-nps',f2.metric_nps);
+
+  // swot actions
+  if(s.swot_actions&&s.swot_actions.length>0){
+    swotActions = s.swot_actions;
+    swotActionId = swotActions.length;
+    // re-render each action card
+    swotActions.forEach(function(a){
+      var container=document.getElementById('swot-'+a.quadrant.toLowerCase()+'-actions');
+      if(!container)return;
+      var cfg=swotTypeConfig[a.quadrant]||{label:a.quadrant,bg:'var(--line)',color:'var(--muted)',border:'var(--border)'};
+      var div=document.createElement('div');
+      div.className='swot-action-item'; div.id=a.id;
+      div.innerHTML='<div class="sai-header"><span class="sai-type" style="background:'+cfg.bg+';color:'+cfg.color+';border:1px solid '+cfg.border+';">'+cfg.label+'</span><span style="font-size:10px;color:var(--muted);">Ação estratégica</span></div>'+
+        '<input class="sai-input" type="text" value="'+escHtml(a.text)+'" onchange="updateSwotActionText(\''+a.id+'\',\''+a.quadrant+'\',\''+a.defaultPriority+'\',this.value)">'+
+        '<button class="sai-del" onclick="removeSwotAction(\''+a.id+'\',\''+a.quadrant.toLowerCase()+'\')">✕</button>';
+      container.appendChild(div);
+    });
+    updateSwotCount();
+  }
+
+  // fase 3 touchpoints
+  var f3=s.fase3||{};
+  if(f3.touchpoints){
+    Object.keys(f3.touchpoints).forEach(function(k){
+      tpState[k]=f3.touchpoints[k];
+      var el=document.querySelector('[data-key="'+k+'"]');
+      if(el){
+        el.className='tp-pill';
+        if(tpState[k]===1)el.classList.add('on-off');
+        else if(tpState[k]===2)el.classList.add('on-dig');
+        else if(tpState[k]===3)el.classList.add('on-hyb');
+      }
+    });
+    updateSummaryTP();
+  }
+
+  // fase 4 budget
+  var f4=s.fase4||{};
+  if(f4.budget){
+    Object.keys(f4.budget).forEach(function(id){
+      budgetState[id]=f4.budget[id]||0;
+      var sl=document.getElementById('sl-'+id);
+      var cv=document.getElementById('cv-'+id);
+      if(sl)sl.value=budgetState[id];
+      if(cv)cv.textContent='R$'+(budgetState[id]>=1000?(budgetState[id]/1000).toFixed(0)+'k':budgetState[id]);
+    });
+    updateBudget();
+  }
+  set('budget-justification',(f4.justification||''));
+
+  // fase 5
+  var f5=s.fase5||{};
+  set('h1',f5.h1); set('h2',f5.h2); set('h3',f5.h3);
+  set('case-ref',f5.case_ref); set('case-learning',f5.case_learning);
+
+  // plan actions
+  if(s.plan_actions&&s.plan_actions.length>0){
+    planActions = s.plan_actions;
+    renderPlanActions();
+  }
+
+  // fase 6
+  var f6=s.fase6||{};
+  if(f6.scores){f6.scores.forEach(function(v,i){set('e'+(i+1),v);});}
+  set('feedback-pos',f6.feedback_pos); set('feedback-neg',f6.feedback_neg);
+
+  // score + phase
+  if(s.score_total){ totalScore=s.score_total; document.getElementById('score-display').textContent=totalScore; }
+  if(s.fase_atual){ goTo(s.fase_atual); }
+
+  // sync derived UI
+  syncBrand(); syncPersona(); updateSwotPreviews();
+}
+
+/* ── SAVE ── */
+function saveNow(manual){
+  var nome = (document.getElementById('group-name-input')||{}).value||'';
+  if(!nome.trim()){
+    if(manual) setSaveStatus('warn','Digite o nome do grupo primeiro');
+    return;
+  }
+  if(saveInProgress) return;
+  saveInProgress = true;
+  setSaveStatus('saving','Salvando...');
+
+  var payload = collectState();
+  payload.nome_grupo = nome.trim();
+  payload.integrantes = (document.getElementById('members-input')||{}).value||'';
+
+  var promise;
+  if(currentSessionId){
+    // UPDATE
+    promise = sbFetch('mba_sessoes?id=eq.'+currentSessionId, 'PATCH', payload);
+  } else {
+    // INSERT
+    promise = sbFetch('mba_sessoes', 'POST', payload).then(function(res){
+      var row = Array.isArray(res)?res[0]:res;
+      if(row&&row.id){ currentSessionId=row.id; }
+      return res;
+    });
+  }
+
+  promise.then(function(res){
+    saveInProgress = false;
+    isDirty = false;
+    lastSaveTime = new Date();
+    setSaveStatus('ok','Salvo com sucesso');
+    document.getElementById('save-last').textContent='Último save: '+lastSaveTime.toLocaleTimeString('pt-BR');
+  }).catch(function(err){
+    saveInProgress = false;
+    if(err.message&&err.message.indexOf('file://')>-1){
+      setSaveStatus('warn','Abra via servidor local para salvar (ex: Live Server do VS Code)');
+    } else {
+      setSaveStatus('error','Erro ao salvar. Verifique a conexão.');
+    }
+    console.warn('Supabase:', err.message);
+  });
+}
+
+function setSaveStatus(type, msg){
+  var dot=document.getElementById('save-dot');
+  var txt=document.getElementById('save-msg');
+  var colors={ok:'var(--green)',saving:'var(--gold)',warn:'var(--gold)',error:'var(--red)'};
+  if(dot) dot.style.background=colors[type]||'var(--dim)';
+  if(txt) txt.textContent=msg;
+}
+
+/* ── AUTO-SAVE every 30s if dirty ── */
+function startAutoSave(){
+  if(autoSaveInterval) clearInterval(autoSaveInterval);
+  // Show file:// warning immediately
+  if(window.location.protocol==='file:'){
+    setSaveStatus('warn','💡 Abra via Live Server para salvar no Supabase');
+    return;
+  }
+  autoSaveInterval = setInterval(function(){
+    if(isDirty){
+      var nome=(document.getElementById('group-name-input')||{}).value||'';
+      if(nome.trim()) saveNow(false);
+    }
+  }, 30000);
+}
+
+/* ── RESUME SESSION ── */
+function resumeSession(){
+  var nome=(document.getElementById('resume-input').value||'').trim();
+  if(!nome){ alert('Digite o nome do grupo para buscar.'); return; }
+  setSaveStatus('saving','Buscando sessão...');
+  sbFetch('mba_sessoes?nome_grupo=eq.'+encodeURIComponent(nome)+'&order=updated_at.desc&limit=1')
+    .then(function(rows){
+      if(!rows||rows.length===0){
+        setSaveStatus('warn','Nenhuma sessão encontrada para "'+nome+'"');
+        return;
+      }
+      var row=rows[0];
+      currentSessionId=row.id;
+      // set group name
+      var gi=document.getElementById('group-name-input');
+      if(gi){gi.value=row.nome_grupo; updateGroup(row.nome_grupo);}
+      var mi=document.getElementById('members-input');
+      if(mi&&row.integrantes) mi.value=row.integrantes;
+      // restore full state
+      var state=Object.assign({},row);
+      applyState(state);
+      setSaveStatus('ok','Sessão restaurada! Bem-vindos de volta 👋');
+      document.getElementById('save-last').textContent='Restaurado: '+new Date(row.updated_at).toLocaleString('pt-BR');
+    }).catch(function(err){
+      if(err.message&&err.message.indexOf('file://')>-1){
+        setSaveStatus('warn','Abra via servidor local para buscar sessões salvas');
+      } else {
+        setSaveStatus('error','Erro ao buscar sessão.');
+      }
+      console.warn(err.message);
+    });
+}
+
+/* ── PROFESSOR PANEL ── */
+function openProfPanel(){
+  // Ask for password before showing
+  var PROF_PASSWORD = 'unialfa2026';
+  var stored = sessionStorage.getItem('prof_auth');
+  if(stored !== PROF_PASSWORD){
+    var pw = prompt('🔐 Painel do Professor\n\nDigite a senha de acesso:');
+    if(!pw || pw.trim() !== PROF_PASSWORD){
+      alert('Senha incorreta. Acesso negado.');
+      return;
+    }
+    sessionStorage.setItem('prof_auth', PROF_PASSWORD);
+  }
+  document.getElementById('prof-overlay').classList.add('open');
+  loadProfPanel();
+  // Auto-refresh every 30s while panel is open
+  if(window._profRefreshInt) clearInterval(window._profRefreshInt);
+  window._profRefreshInt = setInterval(function(){
+    if(document.getElementById('prof-overlay').classList.contains('open')){
+      loadProfPanel();
+    } else {
+      clearInterval(window._profRefreshInt);
+    }
+  }, 30000);
+}
+
+function loadProfPanel(){
+  var body = document.getElementById('prof-body');
+  var faseLabel = ['','Briefing','Diagnóstico','Mapeamento','Orçamento','Estratégia','Apresentação'];
+  var faseColors= ['','#6B7280','#1D4ED8','#B45309','#C62828','#15803D','#15803D'];
+
+  body.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">' +
+      '<div style="font-size:11px;color:var(--muted);">⏱ Atualização automática a cada 30s · <span id="prof-last-update">—</span></div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="loadProfPanel()">🔄 Atualizar Agora</button>' +
+        '<button class="btn btn-secondary" style="font-size:11px;padding:6px 12px;" onclick="exportProfCSV()">⬇ Exportar CSV</button>' +
+        '<button class="btn" style="font-size:11px;padding:6px 12px;background:var(--red);color:#fff;" onclick="sessionStorage.removeItem(\'prof_auth\');document.getElementById(\'prof-overlay\').classList.remove(\'open\')">🔒 Sair</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="prof-summary-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;"></div>' +
+    '<div id="prof-groups-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;"></div>' +
+    '<div id="prof-ranking" style="margin-top:24px;"></div>';
+
+  sbFetch('mba_sessoes?order=updated_at.desc&limit=50')
+    .then(function(rows){
+      if(!rows || rows.length === 0){
+        document.getElementById('prof-groups-grid').innerHTML =
+          '<div style="text-align:center;padding:40px;color:var(--muted);grid-column:1/-1;">Nenhum grupo salvo ainda. Os grupos aparecerão aqui conforme forem preenchendo o formulário.</div>';
+        return;
+      }
+
+      // Update timestamp
+      var lupd = document.getElementById('prof-last-update');
+      if(lupd) lupd.textContent = 'Atualizado: ' + new Date().toLocaleTimeString('pt-BR');
+
+      // Store for CSV export
+      window._profRows = rows;
+
+      // ── SUMMARY STATS ──
+      var totalGroups = rows.length;
+      var avgPhase = (rows.reduce(function(a,r){return a+(r.fase_atual||1);},0)/totalGroups).toFixed(1);
+      var avgScore = Math.round(rows.reduce(function(a,r){return a+(r.score_total||0);},0)/totalGroups);
+      var completedPhase6 = rows.filter(function(r){return (r.fase_atual||1)>=6;}).length;
+
+      var summEl = document.getElementById('prof-summary-row');
+      if(summEl) summEl.innerHTML = [
+        {label:'Grupos Ativos', val:totalGroups, icon:'👥', color:'var(--blue)'},
+        {label:'Fase Média', val:avgPhase+'/6', icon:'📍', color:'var(--gold)'},
+        {label:'Score Médio', val:avgScore+' pts', icon:'⭐', color:'var(--red)'},
+        {label:'Concluídos', val:completedPhase6, icon:'✅', color:'var(--green)'}
+      ].map(function(s){
+        return '<div style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:14px 16px;box-shadow:var(--shadow);text-align:center;">' +
+          '<div style="font-size:24px;margin-bottom:4px;">'+s.icon+'</div>' +
+          '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:26px;color:'+s.color+';">'+s.val+'</div>' +
+          '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:3px;">'+s.label+'</div>' +
+        '</div>';
+      }).join('');
+
+      // ── GROUP CARDS ──
+      var grid = document.getElementById('prof-groups-grid');
+      if(grid) grid.innerHTML = rows.map(function(r){
+        var fase = r.fase_atual||1;
+        var score = r.score_total||0;
+        var updated = new Date(r.updated_at).toLocaleString('pt-BR');
+        var brand   = (r.fase1&&r.fase1.brand_name)||'—';
+        var sector  = (r.fase1&&r.fase1.brand_sector)||'';
+        var persona = (r.fase1&&r.fase1.persona_name)||'—';
+        var challenge = (r.fase1&&r.fase1.brand_challenge)||'—';
+        var swotCount = (r.swot_actions||[]).length;
+        var planCount = (r.plan_actions||[]).length;
+        var scoredActions = (r.plan_actions||[]).filter(function(a){return a.score!==null&&a.score!==undefined;}).length;
+        var avgActionScore = scoredActions > 0
+          ? ((r.plan_actions||[]).filter(function(a){return a.score!==null;}).reduce(function(s,a){return s+(a.score||0);},0)/scoredActions).toFixed(1)
+          : '—';
+        var phasePct = Math.round((fase/6)*100);
+        var phaseColor = faseColors[fase];
+        var members = r.integrantes||'';
+        var caseRef = (r.fase5&&r.fase5.case_ref)||'—';
+
+        // Scores from fase6
+        var evalScores = (r.fase6&&r.fase6.scores)||[];
+        var weights = [0.15,0.15,0.25,0.20,0.15,0.10];
+        var finalScore = evalScores.length>0
+          ? evalScores.reduce(function(tot,v,i){return tot+(parseFloat(v)||0)*weights[i];},0).toFixed(1)
+          : null;
+
+        return '<div style="background:#fff;border:1px solid var(--border);border-radius:4px;overflow:hidden;box-shadow:var(--shadow);">' +
+          // Header
+          '<div style="background:'+phaseColor+';padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">' +
+            '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:20px;color:#fff;letter-spacing:.5px;">'+r.nome_grupo+'</div>' +
+            '<span style="background:rgba(255,255,255,.2);padding:3px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;">FASE '+fase+' · '+faseLabel[fase]+'</span>' +
+          '</div>' +
+          // Progress bar
+          '<div style="background:rgba(0,0,0,.08);height:4px;"><div style="background:#fff;opacity:.7;height:4px;width:'+phasePct+'%;transition:width .4s;"></div></div>' +
+          // Body
+          '<div style="padding:14px 16px;">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">' +
+              '<div style="font-size:11px;"><span style="color:var(--muted);">🏢 Marca</span><br><strong style="color:var(--dark);font-size:13px;">'+brand+'</strong><br><span style="font-size:10px;color:var(--dim);">'+sector+'</span></div>' +
+              '<div style="font-size:11px;"><span style="color:var(--muted);">👤 Persona</span><br><strong style="color:var(--dark);">'+persona+'</strong></div>' +
+            '</div>' +
+            (challenge!=='—'?'<div style="font-size:10px;color:var(--muted);background:var(--surf);border-left:2px solid var(--border);padding:5px 8px;margin-bottom:10px;line-height:1.5;">'+challenge.substring(0,100)+(challenge.length>100?'…':'')+'</div>':'')+
+            '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">' +
+              '<div style="text-align:center;background:var(--surf);border:1px solid var(--border);padding:6px 4px;border-radius:2px;">' +
+                '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:16px;color:var(--red);">'+swotCount+'</div>' +
+                '<div style="font-size:8px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase;">Ações SWOT</div>' +
+              '</div>' +
+              '<div style="text-align:center;background:var(--surf);border:1px solid var(--border);padding:6px 4px;border-radius:2px;">' +
+                '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:16px;color:var(--blue);">'+planCount+'</div>' +
+                '<div style="font-size:8px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase;">No Plano</div>' +
+              '</div>' +
+              '<div style="text-align:center;background:var(--surf);border:1px solid var(--border);padding:6px 4px;border-radius:2px;">' +
+                '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:16px;color:var(--gold);">'+avgActionScore+'</div>' +
+                '<div style="font-size:8px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase;">Score Médio</div>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid var(--line);">' +
+              '<div>' +
+                '<div style="font-size:10px;color:var(--dim);">'+updated+'</div>' +
+                (caseRef!=='—'?'<div style="font-size:10px;color:var(--muted);margin-top:2px;">📚 '+caseRef.substring(0,40)+'</div>':'')+
+              '</div>' +
+              '<div style="text-align:right;">' +
+                '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:22px;color:var(--gold);">'+score+' pts</div>' +
+                (finalScore!==null?'<div style="font-size:10px;color:var(--green);font-weight:700;">Nota final: '+finalScore+'</div>':'')+
+              '</div>' +
+            '</div>' +
+            (members?'<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-size:10px;color:var(--dim);">👤 '+members.replace(/\n/g,' · ')+'</div>':'')+
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // ── RANKING TABLE ──
+      var sorted = rows.slice().sort(function(a,b){return (b.score_total||0)-(a.score_total||0);});
+      var rankEl = document.getElementById('prof-ranking');
+      if(rankEl) rankEl.innerHTML =
+        '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--red);border-left:3px solid var(--red);padding-left:10px;margin-bottom:12px;">🏆 Ranking de Pontuação</div>' +
+        '<div style="background:#fff;border:1px solid var(--border);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);">' +
+          '<div style="display:grid;grid-template-columns:40px 1fr 80px 80px 80px 80px;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">' +
+            '<span>#</span><span>Grupo</span><span style="text-align:center">Fase</span><span style="text-align:center">SWOT</span><span style="text-align:center">Plano</span><span style="text-align:right">Score</span>' +
+          '</div>' +
+          sorted.map(function(r,i){
+            var medals = ['🥇','🥈','🥉'];
+            var medal = medals[i]||'';
+            var rowBg = i===0?'background:var(--gold-faint);':i===1?'background:var(--line);':'';
+            return '<div style="display:grid;grid-template-columns:40px 1fr 80px 80px 80px 80px;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);'+rowBg+'">' +
+              '<span style="font-size:16px;">'+medal+(i>2?'<span style=\"font-family:\'Barlow Condensed\',sans-serif;font-weight:700;color:var(--dim);\">'+(i+1)+'</span>':'')+'</span>' +
+              '<div><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:14px;">'+r.nome_grupo+'</div>' +
+                '<div style="font-size:10px;color:var(--muted);">'+((r.fase1&&r.fase1.brand_name)||'—')+'</div></div>' +
+              '<span style="text-align:center;font-size:12px;font-weight:600;color:'+faseColors[r.fase_atual||1]+';">'+faseLabel[r.fase_atual||1]+'</span>' +
+              '<span style="text-align:center;font-size:12px;">'+((r.swot_actions||[]).length)+'</span>' +
+              '<span style="text-align:center;font-size:12px;">'+((r.plan_actions||[]).length)+'</span>' +
+              '<span style="text-align:right;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:18px;color:var(--gold);">'+(r.score_total||0)+'</span>' +
+            '</div>';
+          }).join('')+
+        '</div>';
+    }).catch(function(err){
+      document.getElementById('prof-groups-grid').innerHTML =
+        '<div style="text-align:center;padding:24px;color:var(--red);grid-column:1/-1;">'+
+          (err.message&&err.message.indexOf('file://')>-1
+            ? '💡 Abra via Live Server (VS Code) ou http-server para carregar dados do Supabase.'
+            : 'Erro ao carregar dados. Verifique a conexão com o Supabase.')+
+        '</div>';
+    });
+}
+
+function exportProfCSV(){
+  var rows = window._profRows||[];
+  if(!rows.length){ alert('Nenhum dado para exportar.'); return; }
+  var header = 'Grupo,Integrantes,Marca,Setor,Persona,Fase,Score,AçõesSWOT,AçõesPlano,Atualizado';
+  var lines = rows.map(function(r){
+    return [
+      r.nome_grupo,
+      (r.integrantes||'').replace(/\n/g,' | '),
+      (r.fase1&&r.fase1.brand_name)||'',
+      (r.fase1&&r.fase1.brand_sector)||'',
+      (r.fase1&&r.fase1.persona_name)||'',
+      r.fase_atual||1,
+      r.score_total||0,
+      (r.swot_actions||[]).length,
+      (r.plan_actions||[]).length,
+      new Date(r.updated_at).toLocaleString('pt-BR')
+    ].map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(',');
+  });
+  var csv = header+'\n'+lines.join('\n');
+  var blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'unialfa_mba_grupos_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+/* ── Check ?professor=true ── */
+function checkProfMode(){
+  if(window.location.search.indexOf('professor=true')>-1){
+    setTimeout(openProfPanel, 500);
+  }
+}
+
+/* ── Patch updateGroup to also trigger save status ── */
+var _origUpdateGroup = updateGroup;
+updateGroup = function(v){
+  _origUpdateGroup(v);
+  if(v&&v.trim()){
+    setSaveStatus('ok','Grupo "'+v+'" — salvo automaticamente a cada 30s');
+  }
+};
+
+/* ── Start everything ── */
+startAutoSave();
+setTimeout(checkProfMode, 300);
+
+// patch group-name-input to sync group pill and session
+setTimeout(function(){
+  var inp=document.getElementById('group-name-input');
+  if(inp){
+    // also wire members input
+    var mem=document.getElementById('members-input');
+    if(mem) mem.addEventListener('input',function(){ isDirty=true; });
+  }
+},100);
+</script>
+</head>
+<body>
+
+<!-- ══════════════ TOPNAV ══════════════ -->
+<nav class="topnav">
+  <div class="brand">
+    <div class="brand-box">UNIALFA</div>
+    <div class="brand-info">
+      <div class="brand-title">MBA GESTÃO COMERCIAL · 2026</div>
+      <div class="brand-sub">Marketing do Off ao Digital · Atividade Integradora</div>
+    </div>
+  </div>
+  <div class="nav-center">
+    <button class="nav-tab active" onclick="goTo(1)" id="tab-1"><div class="tab-num">1</div>Briefing<div class="tab-dur">30 min</div></button>
+    <button class="nav-tab" onclick="goTo(2)" id="tab-2"><div class="tab-num">2</div>Diagnóstico<div class="tab-dur">45 min</div></button>
+    <button class="nav-tab" onclick="goTo(3)" id="tab-3"><div class="tab-num">3</div>Mapeamento<div class="tab-dur">50 min</div></button>
+    <button class="nav-tab" onclick="goTo(4)" id="tab-4"><div class="tab-num">4</div>Orçamento<div class="tab-dur">40 min</div></button>
+    <button class="nav-tab" onclick="goTo(5)" id="tab-5"><div class="tab-num">5</div>Estratégia<div class="tab-dur">45 min</div></button>
+    <button class="nav-tab" onclick="goTo(6)" id="tab-6"><div class="tab-num">6</div>Apresentação<div class="tab-dur">30 min</div></button>
+  </div>
+  <div class="nav-right">
+    <div class="group-pill" id="group-label">GRUPO —</div>
+    <div class="timer-box">
+      <div class="timer-disp" id="timer-disp">00:00</div>
+      <div class="timer-ctrls">
+        <button class="tc-btn" onclick="startTimer(30)">▶ 30m</button>
+        <button class="tc-btn" onclick="startTimer(45)">▶ 45m</button>
+        <button class="tc-btn" onclick="stopTimer()" style="background:var(--red-faint);color:var(--red);border-color:var(--red-mid);">■ STOP</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════ LIBRARY BAR ══════════════ -->
+<div class="lib-bar">
+  <div class="lib-label">📚 Cases de Referência</div>
+  <div class="lib-sep"></div>
+  <div class="lib-cases">
+    <button class="lib-case-btn" onclick="openCase('magalu')">Magazine Luiza <span class="case-sector">Varejo</span></button>
+    <button class="lib-case-btn" onclick="openCase('boticario')">O Boticário <span class="case-sector">Beleza</span></button>
+    <button class="lib-case-btn" onclick="openCase('riachuelo')">Riachuelo <span class="case-sector">Moda</span></button>
+    <button class="lib-case-btn" onclick="openCase('centauro')">Centauro <span class="case-sector">Esporte</span></button>
+    <button class="lib-case-btn" onclick="openCase('netflix')">Netflix <span class="case-sector">Streaming</span></button>
+    <button class="lib-case-btn" onclick="openCase('airbnb')">Airbnb <span class="case-sector">Plataforma</span></button>
+    <button class="lib-case-btn" onclick="openCase('uber')">Uber <span class="case-sector">Mobilidade</span></button>
+  </div>
+  <div class="lib-sep"></div>
+  <div style="font-size:10px;color:var(--dim);letter-spacing:.5px;">Use como inspiração → não como resposta</div>
+</div>
+
+<!-- ══════════════ WORKSPACE ══════════════ -->
+<div class="workspace">
+<div class="main-col">
+
+<!-- ──────── FASE 1: BRIEFING ──────── -->
+<div class="panel active" id="panel-1">
+  <div class="phase-hdr">
+    <div class="ph-icon">01</div>
+    <div>
+      <div class="ph-title">BRIEFING DA MARCA</div>
+      <div class="ph-sub">Definição do Objeto de Estudo</div>
+      <div class="ph-desc">Seu grupo vai trabalhar com uma marca real — pode ser a empresa de um dos integrantes, um cliente, ou uma marca que o grupo conheça bem. Quanto mais familiaridade, mais profunda será a análise. Esta fase fundamenta todo o trabalho da tarde.</div>
+      <div class="ph-time-badge">⏱ 30 minutos</div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">1.1 Identidade da Marca</div>
+    <div class="g2">
+      <div class="f-wrap">
+        <div class="f-lbl">Nome da Marca / Empresa</div>
+        <input class="finput" id="brand-name" type="text" placeholder="Ex: Farmácia Preço Baixo" oninput="syncBrand()">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Setor / Segmento</div>
+        <select class="finput" id="brand-sector" onchange="syncBrand()">
+          <option value="">Selecione o setor</option>
+          <option>Varejo Físico</option><option>E-commerce / Varejo Digital</option>
+          <option>Saúde & Bem-estar</option><option>Alimentação & Food Service</option>
+          <option>Moda & Vestuário</option><option>Beleza & Cosméticos</option>
+          <option>Educação</option><option>Serviços Financeiros</option>
+          <option>Tecnologia & SaaS</option><option>Turismo & Hospitalidade</option>
+          <option>Logística & Distribuição</option><option>Serviços Profissionais</option>
+          <option>Imobiliário</option><option>Entretenimento</option><option>Outro</option>
+        </select>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Porte da Empresa</div>
+        <select class="finput" id="brand-size">
+          <option value="">Selecione</option>
+          <option>Microempresa (até 9 funcionários)</option>
+          <option>Pequena (10–49 funcionários)</option>
+          <option>Média (50–249 funcionários)</option>
+          <option>Grande (250+ funcionários)</option>
+        </select>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Abrangência Geográfica</div>
+        <select class="finput" id="brand-geo">
+          <option value="">Selecione</option>
+          <option>Local (cidade/bairro)</option><option>Regional (estado/região)</option>
+          <option>Nacional</option><option>Internacional</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-wrap" style="margin-top:14px;">
+      <div class="f-lbl">Proposta de Valor Central</div>
+      <div class="f-hint">O que a empresa entrega de diferente para o cliente? Por que o cliente escolhe ela e não o concorrente?</div>
+      <textarea class="finput" id="brand-value" placeholder="Ex: Conveniência + preço acessível + atendimento humanizado para famílias da classe média em cidades do interior de Goiás." style="min-height:64px;margin-top:6px;"></textarea>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">1.2 Contexto Competitivo</div>
+    <div class="g2">
+      <div class="f-wrap">
+        <div class="f-lbl">Principais Concorrentes (até 3)</div>
+        <input class="finput" type="text" id="brand-competitors" placeholder="Ex: Drogasil, Drogaria São Paulo, farmácia local">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Posicionamento Atual</div>
+        <select class="finput" id="brand-position">
+          <option value="">Selecione</option>
+          <option>Liderança de preço / custo</option>
+          <option>Diferenciação por experiência</option>
+          <option>Nicho / especialização</option>
+          <option>Conveniência / proximidade</option>
+          <option>Premium / exclusividade</option>
+          <option>Em transição / indefinido</option>
+        </select>
+      </div>
+    </div>
+    <div class="f-wrap" style="margin-top:14px;">
+      <div class="f-lbl">Maior Desafio Comercial Atual</div>
+      <div class="f-hint">Seja honesto. Retenção? Aquisição? Ticket médio? Digitalização? Concorrência de grandes redes? Isso vai guiar a estratégia.</div>
+      <textarea class="finput" id="brand-challenge" placeholder="Ex: Perda de clientes para e-commerce de grandes redes. Dificuldade em converter visitas físicas em clientes recorrentes." style="min-height:64px;margin-top:6px;"></textarea>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">1.3 Definição da Persona Principal</div>
+    <div class="tip-box"><div class="callout-label gold">⚡ Por que isso importa</div>Toda a jornada que vocês vão mapear precisa ser narrada a partir do ponto de vista de uma pessoa real. A persona não é um estereótipo — é uma síntese de dados reais. Seja específico: "mulheres de 30–45 anos" é fraco; "Fernanda, 38 anos, mãe de 2 filhos, gestora de RH, mora em Goiânia, usa Instagram no ônibus, compra pelo WhatsApp" é poderoso.</div>
+    <div class="g2" style="margin-top:14px;">
+      <div class="f-wrap">
+        <div class="f-lbl">Nome da Persona</div>
+        <input class="finput" id="persona-name" type="text" placeholder="Ex: Fernanda" oninput="syncPersona()">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Idade & Ocupação</div>
+        <input class="finput" id="persona-age" type="text" placeholder="Ex: 38 anos, Gestora de RH">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Localização & Renda</div>
+        <input class="finput" id="persona-location" type="text" placeholder="Ex: Goiânia (zona sul), renda ~R$6k/mês">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Canal Digital Preferido</div>
+        <select class="finput" id="persona-channel">
+          <option value="">Selecione</option>
+          <option>WhatsApp / Mensagens</option><option>Instagram</option>
+          <option>TikTok</option><option>YouTube</option>
+          <option>Facebook</option><option>LinkedIn</option>
+          <option>Google / Pesquisa</option><option>E-mail</option>
+          <option>Pouco presente no digital</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2" style="margin-top:14px;">
+      <div class="f-wrap">
+        <div class="f-lbl">Principais Dores (o que a frustra)</div>
+        <textarea class="finput" id="persona-pains" placeholder="Ex: Fila no caixa, produto em falta, atendimento impessoal, ter que ligar para verificar preço." style="min-height:64px;"></textarea>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Motivações de Compra (o que a move)</div>
+        <textarea class="finput" id="persona-motivations" placeholder="Ex: Confiança no atendimento, praticidade na retirada, programa de pontos que a família usa." style="min-height:64px;"></textarea>
+      </div>
+    </div>
+    <div class="f-wrap" style="margin-top:14px;">
+      <div class="f-lbl">Principal Objeção de Compra</div>
+      <div class="f-hint">O que impede ela de comprar mais frequentemente ou de indicar a marca?</div>
+      <textarea class="finput" id="persona-objection" placeholder="Ex: Desconfia que o preço online é mais barato. Prefere o app do concorrente que tem histórico de compras." style="min-height:48px;margin-top:6px;"></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completePhase(1,2)">Avançar para Diagnóstico →</button>
+  </div>
+</div>
+
+<!-- ──────── FASE 2: DIAGNÓSTICO ──────── -->
+<div class="panel" id="panel-2">
+  <div class="phase-hdr">
+    <div class="ph-icon">02</div>
+    <div>
+      <div class="ph-title">DIAGNÓSTICO ESTRATÉGICO</div>
+      <div class="ph-sub">Análise da Situação Atual</div>
+      <div class="ph-desc">Antes de propor soluções, é preciso entender profundamente onde a marca está hoje. Este diagnóstico vai revelar gaps, oportunidades e o nível de maturidade omnichannel da empresa.</div>
+      <div class="ph-time-badge">⏱ 45 minutos</div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">2.1 Presença Atual por Canal</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Para cada canal, avalie a situação atual da marca escolhida. Seja crítico — uma nota inflada não ajuda ninguém.</p>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);">
+      <div style="display:grid;grid-template-columns:160px 1fr 90px 90px;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">
+        <span>Canal</span><span>Situação Atual</span><span style="text-align:center">Nível (1–5)</span><span style="text-align:center">Tipo</span>
+      </div>
+      <div id="channel-diag"><!-- rendered by JS --></div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">2.2 Análise SWOT do Marketing Atual</div>
+    <div class="g2">
+      <div class="f-wrap">
+        <div class="f-lbl" style="color:var(--green);">💪 Forças — O que a marca faz bem hoje</div>
+        <textarea class="finput" id="swot-s" placeholder="Ex: Atendimento próximo, fidelidade de clientes antigos, equipe de vendas experiente, localização privilegiada." style="min-height:90px;"></textarea>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl" style="color:var(--red);">😔 Fraquezas — O que falta ou falha</div>
+        <textarea class="finput" id="swot-w" placeholder="Ex: Site desatualizado, sem CRM, atendimento digital lento, nenhuma estratégia de conteúdo, dados de clientes espalhados." style="min-height:90px;"></textarea>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl" style="color:var(--blue);">🚀 Oportunidades — O que o mercado oferece</div>
+        <textarea class="finput" id="swot-o" placeholder="Ex: Crescimento do e-commerce regional, consumidor valorizando marcas locais, espaço para WhatsApp Commerce, lacuna no atendimento pós-venda." style="min-height:90px;"></textarea>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl" style="color:var(--gold);">⚠️ Ameaças — O que pode prejudicar</div>
+        <textarea class="finput" id="swot-t" placeholder="Ex: Expansão de grandes redes, aplicativos de delivery na região, consumidor migrando para marketplace, aumento do custo de aquisição digital." style="min-height:90px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">2.3 Matriz SWOT Cruzada — Proposição de Ações</div>
+    <div class="info-box" style="margin-bottom:16px;">
+      <div class="callout-label blue">🎯 Como funciona</div>
+      A SWOT Cruzada confronta os quadrantes dois a dois para gerar ações estratégicas reais. Preencha cada célula com <strong>pelo menos 1 ação concreta</strong>. Ao finalizar, as ações serão exportadas automaticamente para o Plano de Ação da Fase 5, onde vocês as hierarquizarão por <strong>Impacto × Viabilidade</strong>.
+    </div>
+
+    <!-- SWOT CRUZADA MATRIX -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:4px;overflow:hidden;box-shadow:var(--shadow-md);">
+
+      <!-- Header row -->
+      <div style="display:grid;grid-template-columns:140px 1fr 1fr;border-bottom:2px solid var(--border);">
+        <div style="background:var(--surf);border-right:2px solid var(--border);padding:14px 12px;display:flex;align-items:center;justify-content:center;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:13px;letter-spacing:1px;color:var(--muted);text-align:center;text-transform:uppercase;">SWOT<br>CRUZADA</div>
+        </div>
+        <div style="padding:12px 16px;border-right:1px solid var(--border);background:var(--green-faint);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--green);margin-bottom:4px;">💪 FORÇAS (S)</div>
+          <div style="font-size:10px;color:var(--muted);font-style:italic;" id="swot-s-preview">Preencha as Forças na seção 2.2</div>
+        </div>
+        <div style="padding:12px 16px;background:var(--red-faint);">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--red);margin-bottom:4px;">😔 FRAQUEZAS (W)</div>
+          <div style="font-size:10px;color:var(--muted);font-style:italic;" id="swot-w-preview">Preencha as Fraquezas na seção 2.2</div>
+        </div>
+      </div>
+
+      <!-- SO Row -->
+      <div style="display:grid;grid-template-columns:140px 1fr 1fr;border-bottom:1px solid var(--border);">
+        <div style="background:var(--blue-faint);border-right:2px solid var(--border);padding:14px 12px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--blue);margin-bottom:3px;">🚀 OPORTUNIDADES (O)</div>
+          <div style="font-size:10px;color:var(--muted);font-style:italic;" id="swot-o-preview">Preencha as Oportunidades</div>
+        </div>
+        <div style="padding:14px;border-right:1px solid var(--border);background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;color:var(--green);">SO — ALAVANCAGEM</div>
+            <span style="font-size:9px;background:var(--green-faint);color:var(--green);border:1px solid var(--green-mid);padding:2px 8px;font-weight:700;">USE Forças p/ aproveitar Oportunidades</span>
+          </div>
+          <div id="swot-so-actions" style="display:flex;flex-direction:column;gap:6px;min-height:60px;"></div>
+          <button class="swot-add-btn" onclick="addSwotAction('so','Alta','var(--green)','SO')" style="margin-top:8px;background:var(--green-faint);border:1px dashed var(--green-mid);color:var(--green);width:100%;padding:5px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;border-radius:2px;">+ Adicionar ação SO</button>
+        </div>
+        <div style="padding:14px;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;color:var(--gold);">WO — DESENVOLVIMENTO</div>
+            <span style="font-size:9px;background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);padding:2px 8px;font-weight:700;">SUPERE Fraquezas c/ Oportunidades</span>
+          </div>
+          <div id="swot-wo-actions" style="display:flex;flex-direction:column;gap:6px;min-height:60px;"></div>
+          <button class="swot-add-btn" onclick="addSwotAction('wo','Média','var(--gold)','WO')" style="margin-top:8px;background:var(--gold-faint);border:1px dashed var(--gold-mid);color:var(--gold);width:100%;padding:5px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;border-radius:2px;">+ Adicionar ação WO</button>
+        </div>
+      </div>
+
+      <!-- ST Row -->
+      <div style="display:grid;grid-template-columns:140px 1fr 1fr;">
+        <div style="background:var(--gold-faint);border-right:2px solid var(--border);padding:14px 12px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);margin-bottom:3px;">⚠️ AMEAÇAS (T)</div>
+          <div style="font-size:10px;color:var(--muted);font-style:italic;" id="swot-t-preview">Preencha as Ameaças</div>
+        </div>
+        <div style="padding:14px;border-right:1px solid var(--border);background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;color:var(--blue);">ST — PROTEÇÃO</div>
+            <span style="font-size:9px;background:var(--blue-faint);color:var(--blue);border:1px solid var(--blue-mid);padding:2px 8px;font-weight:700;">USE Forças p/ neutralizar Ameaças</span>
+          </div>
+          <div id="swot-st-actions" style="display:flex;flex-direction:column;gap:6px;min-height:60px;"></div>
+          <button class="swot-add-btn" onclick="addSwotAction('st','Média','var(--blue)','ST')" style="margin-top:8px;background:var(--blue-faint);border:1px dashed var(--blue-mid);color:var(--blue);width:100%;padding:5px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;border-radius:2px;">+ Adicionar ação ST</button>
+        </div>
+        <div style="padding:14px;background:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;letter-spacing:1px;color:var(--red);">WT — SOBREVIVÊNCIA</div>
+            <span style="font-size:9px;background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);padding:2px 8px;font-weight:700;">MINIMIZE Fraquezas, EVITE Ameaças</span>
+          </div>
+          <div id="swot-wt-actions" style="display:flex;flex-direction:column;gap:6px;min-height:60px;"></div>
+          <button class="swot-add-btn" onclick="addSwotAction('wt','Baixa','var(--red)','WT')" style="margin-top:8px;background:var(--red-faint);border:1px dashed var(--red-mid);color:var(--red);width:100%;padding:5px;font-size:11px;cursor:pointer;font-family:'Barlow',sans-serif;border-radius:2px;">+ Adicionar ação WT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEGENDA + BOTÃO EXPORTAR -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <span style="font-size:11px;color:var(--muted);">Ações adicionadas: <strong id="swot-action-count" style="color:var(--dark);">0</strong></span>
+        <span style="width:1px;height:16px;background:var(--border);display:inline-block;"></span>
+        <span style="font-size:10px;color:var(--dim);">SO = Ofensiva &nbsp;|&nbsp; WO = Crescimento &nbsp;|&nbsp; ST = Defensiva &nbsp;|&nbsp; WT = Contingência</span>
+      </div>
+      <button class="btn btn-primary" onclick="exportSwotToActionPlan()" style="font-size:11px;padding:7px 16px;">
+        ↗ Exportar Ações para Fase 5
+      </button>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">2.4 Maturidade Omnichannel</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Avalie a situação atual da integração entre os canais da marca. Marque o nível mais próximo da realidade.</p>
+    <div id="omni-maturity"><!-- rendered by JS --></div>
+    <div class="f-wrap" style="margin-top:16px;">
+      <div class="f-lbl">Maior Barreira para a Integração</div>
+      <div class="f-hint">Tecnologia? Cultura interna? Budget? Dados fragmentados? Seja específico — isso vai direcionar as prioridades.</div>
+      <textarea class="finput" id="omni-barrier" placeholder="Ex: Os dados de CRM da loja física não conversam com o e-commerce. Cada canal tem sua própria meta, gerando competição interna em vez de complementaridade." style="min-height:64px;margin-top:6px;"></textarea>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">2.5 Métricas Atuais (estimativas)</div>
+    <div class="info-box"><div class="callout-label blue">📊 Instrução</div>Se a marca for de um integrante, use dados reais (aproximados). Se não, estime com base no que vocês sabem do setor. O que importa é a lógica, não o número exato.</div>
+    <div class="g4" style="margin-top:16px;">
+      <div class="f-wrap">
+        <div class="f-lbl">CAC Atual (R$)</div>
+        <input class="finput" type="number" id="metric-cac" placeholder="Ex: 85">
+        <div class="f-hint">Custo para adquirir 1 cliente</div>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">LTV Atual (R$)</div>
+        <input class="finput" type="number" id="metric-ltv" placeholder="Ex: 380">
+        <div class="f-hint">Valor em 12 meses por cliente</div>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Taxa de Recompra (%)</div>
+        <input class="finput" type="number" id="metric-recompra" placeholder="Ex: 28">
+        <div class="f-hint">% clientes que voltam</div>
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">NPS Atual (estimado)</div>
+        <input class="finput" type="number" id="metric-nps" placeholder="Ex: 42">
+        <div class="f-hint">–100 a +100</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completePhase(2,3)">Avançar para Mapeamento →</button>
+    <button class="btn btn-secondary" onclick="goTo(1)">← Voltar</button>
+  </div>
+</div>
+
+<!-- ──────── FASE 3: MAPEAMENTO ──────── -->
+<div class="panel" id="panel-3">
+  <div class="phase-hdr">
+    <div class="ph-icon">03</div>
+    <div>
+      <div class="ph-title">MAPEAMENTO DA JORNADA</div>
+      <div class="ph-sub">Customer Journey Map Completo</div>
+      <div class="ph-desc">Esta é a fase central. Mapeie cada etapa da jornada do consumidor da sua persona com os 5A's de Kotler. Documente touchpoints reais, emoções, gaps e oportunidades. Seja detalhado — aqui está o coração da estratégia.</div>
+      <div class="ph-time-badge">⏱ 50 minutos</div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">3.1 Jornada dos 5A's — Touchpoints por Etapa</div>
+    <div class="tp-legend">
+      <span><span class="dot dot-off"></span> Off-line (clique 1x)</span>
+      <span><span class="dot dot-dig"></span> Digital (clique 2x)</span>
+      <span><span class="dot dot-hyb"></span> Híbrido (clique 3x)</span>
+      <span style="color:var(--dim);">Clique para alternar • Clique 4x para desativar</span>
+    </div>
+    <div class="stage-grid" id="stage-grid"><!-- rendered by JS --></div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">3.2 Mapa Emocional da Jornada</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Defina a emoção dominante que <strong id="persona-name-display">a persona</strong> experimenta em cada etapa e a causa principal.</p>
+    <div class="emotion-track" id="emotion-track"><!-- rendered by JS --></div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">3.3 Análise de Gaps — Onde a Jornada Falha</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Para cada etapa, avalie a qualidade atual da experiência e identifique o principal gap estratégico.</p>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);">
+      <div style="display:grid;grid-template-columns:100px 80px 1fr 1fr;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">
+        <span>Etapa</span><span>Score (1–5)</span><span>Gap Identificado</span><span>Impacto para a Persona</span>
+      </div>
+      <div id="gap-analysis"><!-- rendered by JS --></div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">3.4 Detalhamento por Etapa — Ativações Propostas</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Para cada etapa, proponha ativações concretas. Cada ativação deve ter canal, mensagem, objetivo e KPI. Integre off-line e digital.</p>
+    <div id="activation-blocks"><!-- rendered by JS --></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completePhase(3,4)">Avançar para Orçamento →</button>
+    <button class="btn btn-secondary" onclick="goTo(2)">← Voltar</button>
+  </div>
+</div>
+
+<!-- ──────── FASE 4: ORÇAMENTO ──────── -->
+<div class="panel" id="panel-4">
+  <div class="phase-hdr">
+    <div class="ph-icon">04</div>
+    <div>
+      <div class="ph-title">ALOCAÇÃO DE ORÇAMENTO</div>
+      <div class="ph-sub">Simulador de Investimento por Canal</div>
+      <div class="ph-desc">Com R$100.000 de orçamento anual, como vocês distribuiriam os recursos entre os canais? O simulador calcula métricas projetadas em tempo real. Cada decisão tem impacto — justifiquem as escolhas.</div>
+      <div class="ph-time-badge">⏱ 40 minutos</div>
+    </div>
+  </div>
+
+  <div class="budget-header">
+    <div class="bstat"><div class="bstat-label">Orçamento Total</div><div class="bstat-val">R$ 100.000</div><div class="bstat-sub">Anual</div></div>
+    <div class="bstat"><div class="bstat-label">Alocado</div><div class="bstat-val red" id="b-spent">R$ 0</div><div class="bstat-sub" id="b-pct">0% do orçamento</div></div>
+    <div class="bstat"><div class="bstat-label">Saldo Livre</div><div class="bstat-val green" id="b-left">R$ 100.000</div><div class="bstat-sub">disponível para realocar</div></div>
+  </div>
+  <div class="budget-track"><div class="budget-track-fill" id="b-track" style="width:0%"></div></div>
+
+  <div class="g2">
+    <div>
+      <div class="sec-lbl">Canais Off-line</div>
+      <div class="card" style="padding:14px 16px;" id="ch-off"><!-- rendered --></div>
+    </div>
+    <div>
+      <div class="sec-lbl">Canais Digitais</div>
+      <div class="card" style="padding:14px 16px;" id="ch-dig"><!-- rendered --></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="sec-lbl" style="margin-bottom:14px;">Projeção de Resultados — 12 meses</div>
+  <div class="metrics-grid" id="metrics-grid"><!-- rendered --></div>
+
+  <div class="tip-box" id="budget-insight" style="margin-top:4px;">
+    <div class="callout-label gold">💡 Insight do Simulador</div>
+    Mova os sliders para ver o impacto das decisões de investimento em tempo real.
+  </div>
+
+  <div class="sec-block" style="margin-top:24px;">
+    <div class="sec-lbl">Justificativa Estratégica da Alocação</div>
+    <div class="f-wrap">
+      <div class="f-lbl">Por que vocês escolheram este mix? Como ele reflete a jornada mapeada?</div>
+      <textarea class="finput" id="budget-justification" placeholder="Ex: Priorizamos email marketing (ROI R$36:1) e eventos físicos porque nossa persona decide na loja e precisa de reforço pós-compra para recompra. Reduzimos TV por alcance excessivo para um público local de nicho." style="min-height:80px;"></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completePhase(4,5)">Avançar para Estratégia →</button>
+    <button class="btn btn-secondary" onclick="goTo(3)">← Voltar</button>
+    <button class="btn btn-ghost" onclick="resetBudget()">Resetar Sliders</button>
+  </div>
+</div>
+
+<!-- ──────── FASE 5: ESTRATÉGIA ──────── -->
+<div class="panel" id="panel-5">
+  <div class="phase-hdr">
+    <div class="ph-icon">05</div>
+    <div>
+      <div class="ph-title">ESTRATÉGIA INTEGRADA</div>
+      <div class="ph-sub">Plano de Ação Off + Digital</div>
+      <div class="ph-desc">Com o diagnóstico, mapeamento e orçamento definidos, é hora de consolidar a estratégia. Plano de 90 dias, prioridades de implementação, KPIs e análise comparativa com um case real de referência.</div>
+      <div class="ph-time-badge">⏱ 45 minutos</div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">5.1 Plano de Ação Estratégico — Hierarquização por Impacto × Viabilidade</div>
+    <div class="tip-box" style="margin-bottom:16px;">
+      <div class="callout-label gold">⚡ MBA Mindset</div>
+      As ações abaixo vieram da SWOT Cruzada (Fase 2). Cada uma já tem sua origem estratégica — SO, WO, ST ou WT. Agora o trabalho é <strong>hierarquizar</strong>: avalie Impacto (0–10), Custo (0–10) e Importância Estratégica (0–10). O Score Final é calculado automaticamente. Arraste para reordenar.
+    </div>
+
+    <!-- FILTROS E CONTROLES -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;">Filtrar:</div>
+      <button class="filter-btn active" data-filter="all" onclick="filterActions('all',this)">Todas</button>
+      <button class="filter-btn" data-filter="SO" onclick="filterActions('SO',this)">SO — Ofensiva</button>
+      <button class="filter-btn" data-filter="WO" onclick="filterActions('WO',this)">WO — Crescimento</button>
+      <button class="filter-btn" data-filter="ST" onclick="filterActions('ST',this)">ST — Defensiva</button>
+      <button class="filter-btn" data-filter="WT" onclick="filterActions('WT',this)">WT — Contingência</button>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="btn btn-ghost" style="font-size:10px;padding:5px 12px;" onclick="sortActions('score')">↓ Ordenar por Score</button>
+        <button class="btn btn-ghost" style="font-size:10px;padding:5px 12px;" onclick="addManualAction()">+ Adicionar Manualmente</button>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="action-empty-state" style="background:var(--surf);border:2px dashed var(--border);border-radius:4px;padding:32px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:10px;">📋</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:var(--muted);margin-bottom:6px;">Nenhuma ação importada ainda</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">Adicione ações na SWOT Cruzada (Fase 2) e clique em "Exportar Ações para Fase 5"<br>ou adicione manualmente clicando no botão acima.</div>
+      <button class="btn btn-secondary" onclick="goTo(2)">← Ir para SWOT Cruzada</button>
+    </div>
+
+    <!-- ACTION TABLE HEADER -->
+    <div id="action-table-wrap" style="display:none;">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:4px;overflow:hidden;box-shadow:var(--shadow-md);">
+        <div id="action-table-header" style="display:grid;grid-template-columns:28px 56px 1fr 90px 80px 70px 70px 70px 80px 60px;align-items:center;background:var(--surf);border-bottom:2px solid var(--border);padding:8px 12px;gap:6px;">
+          <span></span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">Tipo</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">Ação Estratégica</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">Responsável</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">Prazo</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;" title="Impacto no negócio (0–10)">Impacto</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;" title="Custo de implementação (0=caro, 10=barato)">Custo</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;" title="Importância estratégica (0–10)">Import.</span>
+          <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;">Score</span>
+          <span></span>
+        </div>
+        <div id="action-list"></div>
+      </div>
+
+      <!-- SCORE LEGEND -->
+      <div style="display:flex;gap:16px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+        <div style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.5px;">Score Final = (Impacto × 0,45) + (Custo × 0,25) + (Importância × 0,30)</div>
+        <div style="display:flex;gap:8px;margin-left:auto;">
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--green);"><span style="width:10px;height:10px;background:var(--green);border-radius:50%;display:inline-block;"></span>Score ≥ 7 — Prioridade Alta</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--gold);"><span style="width:10px;height:10px;background:var(--gold);border-radius:50%;display:inline-block;"></span>Score 5–6,9 — Média</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--red);"><span style="width:10px;height:10px;background:var(--red);border-radius:50%;display:inline-block;"></span>Score &lt; 5 — Baixa</span>
+        </div>
+      </div>
+
+      <!-- MATRIZ 2x2 IMPACTO vs VIABILIDADE -->
+      <div style="margin-top:24px;">
+        <div class="sec-lbl" style="margin-bottom:12px;">Matriz de Priorização — Impacto × Viabilidade</div>
+        <div style="display:grid;grid-template-columns:32px 1fr 1fr;grid-template-rows:32px 1fr 1fr;gap:2px;height:280px;">
+          <!-- Labels -->
+          <div></div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;">Alta Viabilidade</div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;">Baixa Viabilidade</div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;writing-mode:vertical-rl;transform:rotate(180deg);">Alto Impacto</div>
+          <div style="background:var(--green-faint);border:2px solid var(--green-mid);border-radius:3px;padding:10px;overflow:auto;" id="quad-HH">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;color:var(--green);margin-bottom:6px;">🚀 FAZER AGORA</div>
+            <div id="quad-HH-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+          <div style="background:var(--gold-faint);border:2px solid var(--gold-mid);border-radius:3px;padding:10px;overflow:auto;" id="quad-HL">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;color:var(--gold);margin-bottom:6px;">📅 PLANEJAR</div>
+            <div id="quad-HL-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;writing-mode:vertical-rl;transform:rotate(180deg);">Baixo Impacto</div>
+          <div style="background:var(--blue-faint);border:2px solid var(--blue-mid);border-radius:3px;padding:10px;overflow:auto;" id="quad-LH">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;color:var(--blue);margin-bottom:6px;">⚡ QUICK WIN</div>
+            <div id="quad-LH-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+          <div style="background:var(--line);border:2px solid var(--border);border-radius:3px;padding:10px;overflow:auto;" id="quad-LL">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">🗑 DEPRIORITIZAR</div>
+            <div id="quad-LL-items" style="display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">5.2 Roadmap de Maturidade Omnichannel</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Como a empresa evolui da situação atual para uma estratégia omnichannel integrada? Defina a trajetória em 3 horizontes.</p>
+    <div class="g3">
+      <div class="card card-red">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;color:var(--red);margin-bottom:4px;">HORIZONTE 1 — 0–3 meses</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:8px;">Quick wins e fundação</div>
+        <textarea class="finput" id="h1" placeholder="Ex: Implantar CRM básico, criar conta no Google Meu Negócio, estruturar WhatsApp Business com catálogo, treinar equipe." style="min-height:80px;font-size:11px;background:var(--surf);"></textarea>
+      </div>
+      <div class="card card-gold">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;color:var(--gold);margin-bottom:4px;">HORIZONTE 2 — 3–6 meses</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:8px;">Integração e automação</div>
+        <textarea class="finput" id="h2" placeholder="Ex: Integrar CRM com loja física, lançar email marketing segmentado, criar fluxo de recuperação de carrinho abandonado." style="min-height:80px;font-size:11px;background:var(--surf);"></textarea>
+      </div>
+      <div class="card card-green">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;color:var(--green);margin-bottom:4px;">HORIZONTE 3 — 6–12 meses</div>
+        <div style="font-size:11px;color:var(--dim);margin-bottom:8px;">Escala e personalização</div>
+        <textarea class="finput" id="h3" placeholder="Ex: IA para recomendação de produtos, programa de fidelidade multicanal, dados unificados com CDP, ship from store ou click & collect." style="min-height:80px;font-size:11px;background:var(--surf);"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">5.3 KPIs do Sucesso — o que vocês vão medir?</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:3px;overflow:hidden;box-shadow:var(--shadow);">
+      <div style="display:grid;grid-template-columns:120px 1fr 100px 100px;background:var(--surf);border-bottom:1px solid var(--border);padding:8px 14px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;">
+        <span>Fase da Jornada</span><span>KPI Escolhido</span><span>Meta 6 meses</span><span>Meta 12 meses</span>
+      </div>
+      <div id="kpi-table"><!-- rendered --></div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">5.4 Análise Comparativa com Case de Referência</div>
+    <div class="info-box" style="margin-bottom:16px;"><div class="callout-label blue">📚 Instrução</div>Consulte os cases na barra superior. Escolha o mais próximo do setor/desafio da sua marca e faça a comparação. O objetivo não é copiar — é extrair aprendizados e adaptar para a realidade da empresa.</div>
+    <div class="f-wrap" style="margin-bottom:14px;">
+      <div class="f-lbl">Case de Referência Escolhido e Por Quê</div>
+      <input class="finput" id="case-ref" type="text" placeholder="Ex: O Boticário — programa de fidelidade integrado, porque nossa marca também tem loja física + digital e precisa unificar dados de clientes.">
+    </div>
+    <table class="cmp-table" id="comparison-table">
+      <thead><tr><th>Dimensão</th><th>Case de Referência</th><th>Nossa Solução</th><th>Viabilidade</th></tr></thead>
+      <tbody id="cmp-tbody"><!-- rendered --></tbody>
+    </table>
+    <div class="f-wrap" style="margin-top:16px;">
+      <div class="f-lbl">Principal Aprendizado do Case para Nossa Estratégia</div>
+      <textarea class="finput" id="case-learning" placeholder="Ex: O Boticário levou 3 anos para integrar 4.000 franquias. Para nossa escala menor, podemos fazer em 6 meses, mas precisamos da mesma disciplina de dados centralizados no CRM antes de escalar comunicação." style="min-height:72px;"></textarea>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="completePhase(5,6)">Ir para Apresentação Final →</button>
+    <button class="btn btn-secondary" onclick="goTo(4)">← Voltar</button>
+  </div>
+</div>
+
+<!-- ──────── FASE 6: APRESENTAÇÃO ──────── -->
+<div class="panel" id="panel-6">
+  <div class="phase-hdr">
+    <div class="ph-icon">06</div>
+    <div>
+      <div class="ph-title">APRESENTAÇÃO FINAL</div>
+      <div class="ph-sub">Pitch de 5 Minutos + Avaliação</div>
+      <div class="ph-desc">Hora de defender a estratégia. O grupo tem 5 minutos para apresentar a jornada mapeada, as decisões estratégicas e os resultados esperados. O professor e os colegas fazem perguntas e avaliam.</div>
+      <div class="ph-time-badge">⏱ 30 minutos por grupo</div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">Resumo Executivo — O que vocês construíram hoje</div>
+    <div class="pres-summary">
+      <div class="pres-section">
+        <div class="pres-section-title">A Marca</div>
+        <div class="pres-row"><span class="pk">Empresa</span><span class="pv" id="sum-brand">—</span></div>
+        <div class="pres-row"><span class="pk">Setor</span><span class="pv" id="sum-sector">—</span></div>
+        <div class="pres-row"><span class="pk">Persona</span><span class="pv" id="sum-persona">—</span></div>
+        <div class="pres-row"><span class="pk">Principal desafio</span><span class="pv" id="sum-challenge">—</span></div>
+      </div>
+      <div class="pres-section">
+        <div class="pres-section-title">A Estratégia</div>
+        <div class="pres-row"><span class="pk">Touchpoints mapeados</span><span class="pv" id="sum-tp">—</span></div>
+        <div class="pres-row"><span class="pk">Budget alocado</span><span class="pv" id="sum-budget">—</span></div>
+        <div class="pres-row"><span class="pk">Mix Digital / Off-line</span><span class="pv" id="sum-mix">—</span></div>
+        <div class="pres-row"><span class="pk">Case de referência</span><span class="pv" id="sum-case">—</span></div>
+      </div>
+      <div class="pres-section">
+        <div class="pres-section-title">Projeção de Resultados (12 meses)</div>
+        <div class="pres-row"><span class="pk">CAC Projetado</span><span class="pv" id="sum-cac">—</span></div>
+        <div class="pres-row"><span class="pk">LTV Projetado</span><span class="pv" id="sum-ltv">—</span></div>
+        <div class="pres-row"><span class="pk">NPS Esperado</span><span class="pv" id="sum-nps">—</span></div>
+        <div class="pres-row"><span class="pk">ROI Estimado</span><span class="pv" id="sum-roi">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">Avaliação do Professor</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px 20px;box-shadow:var(--shadow);">
+      <div class="eval-row" style="border-bottom:2px solid var(--border);padding-bottom:10px;margin-bottom:6px;">
+        <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;">Critério de Avaliação</div>
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:right;">Peso</div>
+        <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;">Nota (0–10)</div>
+      </div>
+      <div class="eval-row"><span class="eval-name">Qualidade do Briefing e Persona</span><span class="eval-weight">15%</span><input type="number" class="eval-input" id="e1" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="eval-row"><span class="eval-name">Profundidade do Diagnóstico</span><span class="eval-weight">15%</span><input type="number" class="eval-input" id="e2" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="eval-row"><span class="eval-name">Mapeamento da Jornada (5A's + emoções + gaps)</span><span class="eval-weight">25%</span><input type="number" class="eval-input" id="e3" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="eval-row"><span class="eval-name">Coerência da Alocação de Orçamento</span><span class="eval-weight">20%</span><input type="number" class="eval-input" id="e4" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="eval-row"><span class="eval-name">Estratégia Integrada + Roadmap</span><span class="eval-weight">15%</span><input type="number" class="eval-input" id="e5" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="eval-row" style="border-bottom:none;"><span class="eval-name">Apresentação, Defesa e Clareza</span><span class="eval-weight">10%</span><input type="number" class="eval-input" id="e6" min="0" max="10" value="" placeholder="—" oninput="calcScore()"></div>
+      <div class="final-score-box">
+        <div class="final-score-num" id="final-score">—</div>
+        <div class="final-score-label">Pontuação Final</div>
+        <div class="grade-pill" id="grade-pill" style="background:var(--line);color:var(--muted);">Aguardando notas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-block">
+    <div class="sec-lbl">Feedback do Professor</div>
+    <div class="f-wrap">
+      <div class="f-lbl">Pontos Fortes da Apresentação</div>
+      <textarea class="finput" id="feedback-pos" placeholder="O que o grupo acertou na análise e na estratégia..." style="min-height:68px;"></textarea>
+    </div>
+    <div class="f-wrap" style="margin-top:12px;">
+      <div class="f-lbl">Oportunidades de Melhoria</div>
+      <textarea class="finput" id="feedback-neg" placeholder="O que poderia ser mais profundo, mais realista ou mais integrado..." style="min-height:68px;"></textarea>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main-col -->
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<div class="side-col">
+
+  <!-- Setup -->
+  <div class="side-section">
+    <div class="side-title">Configuração</div>
+    <div class="setup-field">
+      <div class="f-lbl">Nome do Grupo</div>
+      <input class="finput" id="group-name-input" type="text" placeholder="Ex: Grupo Alfa" oninput="updateGroup(this.value)" style="margin-top:4px;">
+    </div>
+    <div class="setup-field">
+      <div class="f-lbl">Integrantes</div>
+      <textarea class="finput" id="members-input" placeholder="Nome 1&#10;Nome 2&#10;Nome 3&#10;Nome 4" style="min-height:72px;margin-top:4px;font-size:11px;"></textarea>
+    </div>
+    <div class="f-lbl" style="margin-bottom:6px;margin-top:4px;">Temporizador por Fase</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+      <button class="tc-btn" style="padding:5px;" onclick="startTimer(30)">▶ 30 min</button>
+      <button class="tc-btn" style="padding:5px;" onclick="startTimer(45)">▶ 45 min</button>
+      <button class="tc-btn" style="padding:5px;" onclick="startTimer(50)">▶ 50 min</button>
+      <button class="tc-btn" style="padding:5px;" onclick="startTimer(40)">▶ 40 min</button>
+      <button class="tc-btn" style="padding:5px;grid-column:1/-1;background:var(--red-faint);color:var(--red);border-color:var(--red-mid);" onclick="stopTimer()">■ Parar Timer</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="side-section">
+    <div class="side-title">Progresso da Atividade</div>
+    <div class="progress-list" id="progress-list"><!-- rendered --></div>
+  </div>
+
+  <!-- Score -->
+  <div class="side-section">
+    <div class="side-title">Pontuação do Grupo</div>
+    <div class="score-display">
+      <div class="score-big" id="score-display">0</div>
+      <div class="score-lbl">Pontos Acumulados</div>
+    </div>
+  </div>
+
+  <!-- Phase tip -->
+  <div class="side-section">
+    <div class="side-title">Dica da Fase Atual</div>
+    <div id="phase-tip" style="font-size:12px;color:var(--muted);line-height:1.7;"></div>
+  </div>
+
+  <!-- Reference quick -->
+  <div class="side-section">
+    <div class="side-title">Frameworks de Referência</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div style="background:var(--line);border:1px solid var(--border);padding:8px 10px;border-radius:2px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;color:var(--dark);margin-bottom:3px;">5A's de Kotler</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6;">Aware → Appeal → Ask → Act → Advocate</div>
+      </div>
+      <div style="background:var(--line);border:1px solid var(--border);padding:8px 10px;border-radius:2px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;color:var(--dark);margin-bottom:3px;">KPIs por Fase</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6;">Aware: CPM, Alcance<br>Consideração: CTR, Engajamento<br>Decisão: CR, CAC, CPA<br>Retenção: NPS, LTV, Churn</div>
+      </div>
+      <div style="background:var(--line);border:1px solid var(--border);padding:8px 10px;border-radius:2px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:1px;color:var(--dark);margin-bottom:3px;">ROI de Referência</div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.6;">Email: R$36 por R$1<br>SEO: 3x leads vs pago<br>Influência micro: 3,9% eng.<br>CRM: LTV 2x maior</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUPABASE SAVE STATUS -->
+  <div class="side-section" style="background:var(--green-faint);border-top:2px solid var(--green-mid);">
+    <div class="side-title" style="color:var(--green);">💾 Salvamento Automático</div>
+    <div id="save-status" style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span id="save-dot" style="width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;transition:background .3s;"></span>
+      <span id="save-msg" style="font-size:11px;color:var(--muted);">Aguardando nome do grupo...</span>
+    </div>
+    <div style="font-size:10px;color:var(--dim);margin-bottom:10px;line-height:1.6;" id="save-last">Último save: —</div>
+    <button class="btn btn-success" style="width:100%;justify-content:center;font-size:11px;padding:7px;" onclick="saveNow(true)">
+      💾 Salvar Agora
+    </button>
+    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;">
+      <div class="f-lbl" style="margin-bottom:5px;">Retomar sessão salva</div>
+      <div style="display:flex;gap:5px;">
+        <input id="resume-input" class="finput" type="text" placeholder="Nome do grupo..." style="font-size:11px;padding:5px 8px;flex:1;">
+        <button class="btn btn-secondary" style="padding:5px 10px;font-size:11px;" onclick="resumeSession()">Buscar</button>
+      </div>
+    </div>
+    <div style="margin-top:8px;border-top:1px solid var(--green-mid);padding-top:8px;">
+      <a href="?professor=true" target="_blank" style="display:block;text-align:center;font-size:10px;color:var(--green);letter-spacing:1px;text-decoration:none;font-weight:700;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;">
+        📊 Painel do Professor →
+      </a>
+    </div>
+  </div>
+
+</div><!-- /side-col -->
+</div><!-- /workspace -->
+
+<!-- ══════════════ PROFESSOR PANEL MODAL ══════════════ -->
+<div class="modal-overlay" id="prof-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-box" style="width:95vw;max-width:1100px;">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">📊 Painel do Professor — Visão Geral dos Grupos</div>
+        <div class="modal-sub">Atualização em tempo real via Supabase</div>
+      </div>
+      <button class="modal-close" onclick="document.getElementById('prof-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body" id="prof-body">
+      <div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">Carregando grupos...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CASE MODAL ══════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="modal-title">Case</div>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<style>
+:root{
+  --red:#C62828;--red-dk:#8E1C1C;--red-lt:#EF5350;--red-faint:#FEF2F2;--red-mid:#FECACA;
+  --white:#FFFFFF;--page:#F0F2F5;--surf:#FAFAFA;--card:#FFFFFF;
+  --dark:#111827;--mid:#374151;--muted:#6B7280;--dim:#9CA3AF;
+  --border:#E5E7EB;--line:#F3F4F6;
+  --gold:#B45309;--gold-faint:#FFFBEB;--gold-mid:#FDE68A;
+  --green:#15803D;--green-lt:#16A34A;--green-faint:#F0FDF4;--green-mid:#BBF7D0;
+  --blue:#1D4ED8;--blue-faint:#EFF6FF;--blue-mid:#BFDBFE;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 12px rgba(0,0,0,.09);
+}
+
+/* ── SWOT CRUZADA ── */
+.swot-action-item{background:var(--surf);border:1px solid var(--border);border-radius:3px;padding:8px 10px;position:relative;animation:fadeUp .18s ease;}
+.swot-action-item .sai-header{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.sai-type{font-size:9px;font-weight:800;letter-spacing:1.5px;padding:2px 7px;border-radius:20px;}
+.sai-del{position:absolute;top:7px;right:8px;cursor:pointer;color:var(--dim);font-size:11px;background:none;border:none;line-height:1;}
+.sai-del:hover{color:var(--red);}
+.sai-input{width:100%;background:#fff;border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:12px;color:var(--dark);padding:5px 8px;outline:none;border-radius:2px;}
+.sai-input:focus{border-color:var(--red);}
+
+/* ── ACTION PLAN TABLE ── */
+.action-row{display:grid;grid-template-columns:28px 56px 1fr 90px 80px 70px 70px 70px 80px 60px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line);transition:background .15s;}
+.action-row:hover{background:var(--surf);}
+.action-row:last-child{border-bottom:none;}
+.ar-drag{cursor:grab;color:var(--dim);font-size:14px;user-select:none;}
+.ar-drag:active{cursor:grabbing;}
+.ar-type{font-size:9px;font-weight:800;letter-spacing:1px;padding:3px 7px;border-radius:20px;text-align:center;}
+.ar-input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;outline:none;border-radius:2px;}
+.ar-input:focus{border-color:var(--red);background:#fff;}
+.ar-score-input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;color:var(--dark);padding:4px 6px;text-align:center;outline:none;border-radius:2px;}
+.ar-score-input:focus{border-color:var(--red);background:#fff;}
+.ar-score-badge{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;text-align:center;padding:4px 8px;border-radius:3px;min-width:48px;display:block;}
+.ar-del{background:none;border:none;color:var(--dim);cursor:pointer;font-size:14px;padding:3px;}
+.ar-del:hover{color:var(--red);}
+
+/* ── FILTER BUTTONS ── */
+.filter-btn{background:var(--line);border:1px solid var(--border);color:var(--muted);padding:4px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border-radius:20px;transition:all .15s;}
+.filter-btn:hover{border-color:var(--red-mid);color:var(--red);}
+.filter-btn.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+/* ── MATRIX QUAD ITEMS ── */
+.quad-item{font-size:10px;color:var(--mid);background:#fff;border:1px solid var(--border);padding:3px 7px;border-radius:2px;line-height:1.4;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Barlow',sans-serif;background:var(--page);color:var(--dark);display:flex;flex-direction:column;}
+
+/* ── TOPNAV ── */
+.topnav{background:#fff;border-bottom:3px solid var(--red);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;flex-shrink:0;box-shadow:var(--shadow);z-index:300;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-box{background:var(--red);font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:16px;letter-spacing:1.5px;padding:4px 10px;color:#fff;}
+.brand-info{line-height:1.2;}
+.brand-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:14px;letter-spacing:.5px;color:var(--dark);}
+.brand-sub{font-size:9px;letter-spacing:2px;color:var(--dim);text-transform:uppercase;}
+.nav-center{display:flex;gap:2px;}
+.nav-tab{height:56px;padding:0 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-3px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:all .18s;white-space:nowrap;}
+.nav-tab:hover{color:var(--muted);background:var(--line);}
+.nav-tab.active{color:var(--red);border-bottom-color:var(--red);}
+.nav-tab.done{color:var(--green);}
+.tab-num{width:20px;height:20px;border-radius:50%;background:var(--line);border:1px solid var(--border);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all .18s;}
+.nav-tab.active .tab-num{background:var(--red);color:#fff;border-color:var(--red);}
+.nav-tab.done .tab-num{background:var(--green-lt);color:#fff;border-color:var(--green-lt);}
+.tab-dur{font-size:8px;color:var(--dim);font-family:'Barlow',sans-serif;font-weight:400;letter-spacing:.5px;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.group-pill{background:var(--line);border:1px solid var(--border);padding:3px 12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;color:var(--muted);}
+.timer-box{display:flex;align-items:center;gap:0;}
+.timer-disp{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;letter-spacing:2px;background:var(--red);color:#fff;padding:5px 14px;min-width:78px;text-align:center;}
+.timer-ctrls{display:flex;flex-direction:column;gap:2px;margin-left:3px;}
+.tc-btn{background:var(--line);border:1px solid var(--border);font-size:9px;color:var(--muted);cursor:pointer;padding:2px 7px;font-family:'Barlow',sans-serif;}
+.tc-btn:hover{background:var(--border);}
+
+/* ── LIBRARY BAR ── */
+.lib-bar{background:#fff;border-bottom:1px solid var(--border);padding:7px 24px;display:flex;align-items:center;gap:12px;flex-shrink:0;box-shadow:var(--shadow);}
+.lib-label{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.lib-cases{display:flex;gap:6px;flex-wrap:wrap;}
+.lib-case-btn{display:flex;align-items:center;gap:6px;background:var(--line);border:1px solid var(--border);padding:5px 12px;cursor:pointer;font-family:'Barlow',sans-serif;font-size:12px;color:var(--mid);border-radius:2px;transition:all .18s;font-weight:500;}
+.lib-case-btn:hover{background:var(--red-faint);border-color:var(--red-mid);color:var(--red);}
+.lib-case-btn .case-sector{font-size:9px;color:var(--dim);letter-spacing:.5px;}
+.lib-sep{width:1px;height:28px;background:var(--border);}
+
+/* ── WORKSPACE ── */
+.workspace{flex:1;display:flex;overflow:hidden;}
+.main-col{flex:1;overflow-y:auto;padding:28px 32px 40px;}
+.side-col{width:296px;background:#fff;border-left:1px solid var(--border);overflow-y:auto;flex-shrink:0;}
+
+/* ── PANELS ── */
+.panel{display:none;}
+.panel.active{display:block;animation:fadeUp .22s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PHASE HEADER ── */
+.phase-hdr{display:flex;align-items:flex-start;gap:18px;margin-bottom:26px;padding-bottom:22px;border-bottom:1px solid var(--border);}
+.ph-icon{background:var(--red);color:#fff;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;flex-shrink:0;}
+.ph-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:28px;letter-spacing:.5px;line-height:1;}
+.ph-sub{font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--red);font-weight:700;margin-top:3px;}
+.ph-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-top:7px;max-width:620px;}
+.ph-time-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gold-faint);border:1px solid var(--gold-mid);padding:3px 10px;font-size:11px;color:var(--gold);font-weight:600;margin-top:8px;}
+
+/* ── SECTION LABEL ── */
+.sec-lbl{display:flex;align-items:center;gap:8px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--red);margin-bottom:10px;}
+.sec-lbl::before{content:'';width:3px;height:14px;background:var(--red);display:block;}
+.sec-block{margin-bottom:28px;}
+
+/* ── INPUTS ── */
+.f-wrap{display:flex;flex-direction:column;gap:4px;}
+.f-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+.f-hint{font-size:11px;color:var(--dim);margin-top:2px;line-height:1.5;}
+.finput{background:#fff;border:1px solid var(--border);color:var(--dark);padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;width:100%;outline:none;transition:border-color .18s;border-radius:2px;}
+.finput:focus{border-color:var(--red);box-shadow:0 0 0 3px var(--red-faint);}
+.finput::placeholder{color:var(--dim);}
+textarea.finput{resize:vertical;line-height:1.55;}
+select.finput option{background:#fff;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
+
+/* ── CARD ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:3px;padding:18px 20px;box-shadow:var(--shadow);}
+.card-red{border-left:3px solid var(--red);}
+.card-green{border-left:3px solid var(--green-lt);}
+.card-blue{border-left:3px solid var(--blue);}
+.card-gold{border-left:3px solid var(--gold);}
+
+/* ── JOURNEY STAGE BUILDER ── */
+.stage-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;}
+.jstage{background:#fff;padding:0;}
+.jstage-head{padding:10px 12px 8px;border-bottom:1px solid var(--border);}
+.jstage-letter{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;color:var(--red);}
+.jstage-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dark);}
+.jstage-eng{font-size:9px;color:var(--dim);font-weight:400;}
+.jstage-body{padding:10px 12px 14px;}
+.jstage-field{margin-bottom:8px;}
+.jstage-field label{display:block;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);font-weight:600;margin-bottom:3px;}
+.jstage-field textarea{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;}
+.jstage-field textarea:focus{border-color:var(--red);background:#fff;}
+.jstage-field textarea::placeholder{color:var(--dim);}
+.jstage-field input{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 7px;outline:none;border-radius:1px;}
+.jstage-field input:focus{border-color:var(--red);background:#fff;}
+.jstage-field input::placeholder{color:var(--dim);}
+.tp-pills{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;}
+.tp-pill{font-size:10px;padding:2px 7px;border:1px solid var(--border);cursor:pointer;font-family:'Barlow',sans-serif;color:var(--muted);background:#fff;border-radius:20px;transition:all .15s;user-select:none;}
+.tp-pill:hover{border-color:var(--red-mid);}
+.tp-pill.on-dig{background:var(--blue-faint);border-color:var(--blue-mid);color:var(--blue);}
+.tp-pill.on-off{background:var(--red-faint);border-color:var(--red-mid);color:var(--red);}
+.tp-pill.on-hyb{background:var(--gold-faint);border-color:var(--gold-mid);color:var(--gold);}
+.tp-legend{display:flex;gap:10px;font-size:10px;color:var(--muted);margin-bottom:8px;flex-wrap:wrap;align-items:center;}
+.tp-legend span{display:flex;align-items:center;gap:4px;}
+.dot{width:8px;height:8px;border-radius:50%;}
+.dot-dig{background:var(--blue);}
+.dot-off{background:var(--red);}
+.dot-hyb{background:var(--gold);}
+
+/* ── EMOTION TRACK ── */
+.emotion-track{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:20px;}
+.emo-cell{background:#fff;padding:10px 12px;}
+.emo-stage{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);margin-bottom:6px;}
+.emo-select{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;outline:none;border-radius:1px;}
+.emo-select:focus{border-color:var(--red);}
+.emo-note{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;margin-top:5px;outline:none;resize:none;min-height:36px;border-radius:1px;}
+.emo-note:focus{border-color:var(--red);background:#fff;}
+
+/* ── GAP ANALYSIS ── */
+.gap-row{display:grid;grid-template-columns:130px 1fr 1fr 80px;gap:8px;align-items:start;padding:10px 0;border-bottom:1px solid var(--line);}
+.gap-row:last-child{border-bottom:none;}
+.gap-stage-tag{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--red);padding-top:2px;}
+.gap-score-sel{width:100%;background:var(--surf);border:1px solid var(--border);font-family:'Barlow',sans-serif;font-size:11px;color:var(--dark);padding:4px 6px;outline:none;border-radius:1px;}
+.gap-score-sel:focus{border-color:var(--red);}
+.score-badge{display:inline-block;padding:2px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;border-radius:20px;}
+.score-1,.score-2{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.score-3{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+.score-4,.score-5{background:var(--green-faint);color:var(--green);border:1px solid var(--green-mid);}
+
+/* ── BUDGET ── */
+.budget-header{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;}
+.bstat{background:#fff;border:1px solid var(--border);padding:14px 16px;border-radius:3px;box-shadow:var(--shadow);}
+.bstat-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.bstat-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;line-height:1;}
+.bstat-val.red{color:var(--red);}
+.bstat-val.green{color:var(--green);}
+.bstat-val.gold{color:var(--gold);}
+.bstat-sub{font-size:10px;color:var(--dim);margin-top:3px;}
+.budget-track{background:var(--line);height:4px;margin-bottom:20px;border-radius:2px;overflow:hidden;}
+.budget-track-fill{height:4px;background:var(--red);transition:width .3s;border-radius:2px;}
+.ch-row{display:grid;grid-template-columns:150px 1fr 65px;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+.ch-row:last-child{border-bottom:none;}
+.ch-name{font-size:12px;font-weight:500;color:var(--mid);display:flex;align-items:center;gap:6px;}
+.ch-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ch-dig{background:var(--blue);}
+.ch-off{background:var(--red);}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;background:var(--border);outline:none;cursor:pointer;border-radius:2px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--red);cursor:pointer;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);}
+.ch-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--dark);text-align:right;}
+
+/* ── METRICS ── */
+.metrics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.metric-card{background:#fff;border:1px solid var(--border);padding:14px;border-radius:3px;box-shadow:var(--shadow);}
+.metric-name{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:600;}
+.metric-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;line-height:1;}
+.metric-val.good{color:var(--green);}
+.metric-val.warn{color:var(--gold);}
+.metric-val.bad{color:var(--red);}
+.metric-delta{font-size:10px;color:var(--dim);margin-top:3px;}
+
+/* ── ACTIVATION BLOCKS ── */
+.act-block{background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow);}
+.act-head{display:flex;align-items:center;justify-content:space-between;padding:11px 16px;cursor:pointer;border-bottom:1px solid var(--line);background:var(--surf);}
+.act-head:hover{background:var(--line);}
+.act-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:.5px;display:flex;align-items:center;gap:10px;}
+.act-stage-dot{width:6px;height:6px;border-radius:50%;background:var(--red);}
+.act-tags{display:flex;gap:6px;align-items:center;}
+.act-badge{font-size:9px;padding:2px 8px;border-radius:20px;font-weight:600;letter-spacing:.5px;}
+.badge-off{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.badge-dig{background:var(--blue-faint);color:var(--blue);border:1px solid var(--blue-mid);}
+.badge-hyb{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+.badge-none{background:var(--line);color:var(--dim);border:1px solid var(--border);}
+.act-chevron{font-size:11px;color:var(--dim);transition:transform .2s;}
+.act-chevron.open{transform:rotate(180deg);}
+.act-body{padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.act-body.hidden{display:none;}
+
+/* ── COLLAB ── */
+.collab-stage{background:#fff;border:1px solid var(--border);border-radius:3px;margin-bottom:10px;box-shadow:var(--shadow);}
+.collab-stage-head{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--surf);}
+.collab-stage-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;}
+.collab-add{background:none;border:1px solid var(--border);color:var(--muted);padding:3px 10px;font-size:10px;cursor:pointer;font-family:'Barlow',sans-serif;letter-spacing:.5px;border-radius:2px;}
+.collab-add:hover{border-color:var(--red);color:var(--red);}
+.collab-notes{padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;min-height:64px;}
+.cnote{background:var(--surf);border:1px solid var(--border);border-left:3px solid var(--red);padding:7px 10px;font-size:11px;color:var(--mid);min-width:120px;max-width:200px;line-height:1.5;position:relative;}
+.cnote-tag{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:3px;}
+.cnote-del{position:absolute;top:4px;right:6px;cursor:pointer;color:var(--dim);font-size:10px;}
+.cnote-del:hover{color:var(--red);}
+
+/* ── CASE COMPARISON TABLE ── */
+.cmp-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px;}
+.cmp-table th{background:var(--surf);border:1px solid var(--border);padding:8px 12px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.cmp-table td{border:1px solid var(--border);padding:7px 10px;color:var(--mid);vertical-align:top;}
+.cmp-table tr:nth-child(even) td{background:var(--surf);}
+.sim-tag{display:inline-block;padding:1px 6px;font-size:9px;letter-spacing:1px;text-transform:uppercase;font-weight:700;}
+.sim-y{background:var(--green-faint);color:var(--green);border:1px solid var(--green-mid);}
+.sim-n{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.sim-p{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+
+/* ── PRESENTATION ── */
+.pres-summary{background:#fff;border:1px solid var(--border);border-radius:3px;padding:20px;box-shadow:var(--shadow);}
+.pres-section{margin-bottom:20px;}
+.pres-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dark);border-bottom:2px solid var(--border);padding-bottom:7px;margin-bottom:12px;}
+.pres-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:12px;}
+.pres-row:last-child{border-bottom:none;}
+.pres-row .pk{color:var(--muted);}
+.pres-row .pv{color:var(--dark);font-weight:600;}
+.eval-row{display:grid;grid-template-columns:1fr 55px 80px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);}
+.eval-name{font-size:12px;color:var(--mid);}
+.eval-weight{font-size:11px;color:var(--dim);text-align:right;font-weight:600;}
+.eval-input{background:var(--surf);border:1px solid var(--border);color:var(--dark);padding:5px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;text-align:center;width:100%;outline:none;border-radius:2px;}
+.eval-input:focus{border-color:var(--red);}
+.final-score-box{background:var(--surf);border:1px solid var(--border);padding:20px;text-align:center;margin-top:16px;border-radius:3px;}
+.final-score-num{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:56px;line-height:1;}
+.final-score-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-top:4px;}
+.grade-pill{display:inline-block;margin-top:10px;padding:4px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;letter-spacing:2px;border-radius:2px;}
+
+/* ── TIPS / CALLOUTS ── */
+.tip-box{background:var(--gold-faint);border:1px solid var(--gold-mid);border-left:3px solid var(--gold);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:14px;}
+.tip-box strong{color:var(--gold);font-weight:700;}
+.info-box{background:var(--blue-faint);border:1px solid var(--blue-mid);border-left:3px solid var(--blue);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:12px;}
+.warn-box{background:var(--red-faint);border:1px solid var(--red-mid);border-left:3px solid var(--red);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:12px;}
+.callout-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:4px;}
+.callout-label.gold{color:var(--gold);}
+.callout-label.blue{color:var(--blue);}
+.callout-label.red{color:var(--red);}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .18s;border-radius:2px;}
+.btn-primary{background:var(--red);color:#fff;}
+.btn-primary:hover{background:var(--red-dark);}
+.btn-secondary{background:#fff;border:1px solid var(--border);color:var(--mid);}
+.btn-secondary:hover{border-color:var(--red);color:var(--red);}
+.btn-success{background:var(--green-lt);color:#fff;}
+.btn-success:hover{background:var(--green);}
+.btn-ghost{background:var(--line);border:1px solid var(--border);color:var(--muted);}
+.btn-ghost:hover{background:var(--border);}
+.btn-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;}
+
+/* ── SIDEBAR ── */
+.side-section{padding:18px;border-bottom:1px solid var(--border);}
+.side-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.setup-field{margin-bottom:12px;}
+.progress-list{display:flex;flex-direction:column;gap:0;}
+.progress-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);cursor:pointer;transition:color .15s;}
+.progress-item:last-child{border-bottom:none;}
+.progress-item.done{color:var(--dim);text-decoration:line-through;}
+.progress-item.active-item{color:var(--dark);font-weight:600;}
+.chk-box{width:16px;height:16px;border:1.5px solid var(--border);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:#fff;transition:all .15s;}
+.chk-box.checked{background:var(--green-lt);border-color:var(--green-lt);}
+.chk-box.checked::after{content:'✓';font-size:9px;color:#fff;font-weight:700;}
+.score-display{text-align:center;padding:10px 0;}
+.score-big{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:44px;color:var(--red);line-height:1;}
+.score-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin-top:4px;}
+.phase-prog{display:flex;flex-direction:column;gap:6px;}
+.pp-row{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--muted);}
+.pp-bar{background:var(--line);height:3px;border-radius:2px;margin-top:3px;overflow:hidden;}
+.pp-fill{height:3px;background:var(--red);border-radius:2px;transition:width .4s;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(17,24,39,.65);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .22s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:#fff;border:1px solid var(--border);border-top:3px solid var(--red);width:820px;max-height:88vh;overflow-y:auto;border-radius:4px;box-shadow:var(--shadow-md);animation:mUp .25s ease;}
+@keyframes mUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:22px 26px 16px;border-bottom:1px solid var(--border);}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;letter-spacing:.5px;}
+.modal-sub{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--red);font-weight:700;margin-top:3px;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--dim);padding:0 4px;line-height:1;}
+.modal-close:hover{color:var(--red);}
+.modal-body{padding:22px 26px;}
+.case-kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0;}
+.case-kpi{background:var(--surf);border:1px solid var(--border);padding:10px 12px;border-radius:3px;text-align:center;}
+.case-kpi-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--red);display:block;}
+.case-kpi-lbl{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--dim);}
+.case-section{margin-bottom:18px;}
+.case-section-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:10px;}
+.case-strategy-list{display:grid;gap:8px;}
+.case-strat-item{display:flex;gap:10px;padding:10px 12px;background:var(--surf);border:1px solid var(--border);border-radius:3px;}
+.strat-icon{width:28px;height:28px;background:var(--red-faint);border:1px solid var(--red-mid);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border-radius:2px;}
+.strat-text{flex:1;}
+.strat-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--dark);margin-bottom:2px;}
+.strat-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+.case-lesson{background:var(--gold-faint);border:1px solid var(--gold-mid);padding:12px 14px;font-size:12px;color:var(--mid);line-height:1.7;margin-top:8px;}
+.case-lesson strong{color:var(--gold);}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:20px 0;}
+.tag{display:inline-block;padding:2px 8px;font-size:10px;border-radius:20px;font-weight:600;letter-spacing:.5px;}
+.tag-off{background:var(--red-faint);color:var(--red);border:1px solid var(--red-mid);}
+.tag-dig{background:var(--blue-faint);color:var(--blue);border:1px solid var(--blue-mid);}
+.tag-hyb{background:var(--gold-faint);color:var(--gold);border:1px solid var(--gold-mid);}
+</style>
+</head>
+</body>
+</html>
