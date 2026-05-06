@@ -1200,7 +1200,7 @@ function runPersonaAI(){
   }).catch(function(err){
     btn.disabled=false; btn.textContent='✨ Analisar Persona com IA';
     result.style.display='block';
-    result.innerHTML='<div class="warn-box"><div class="callout-label red">Erro ao gerar análise</div>'+err.message+'<br><br><strong>Solução:</strong> Configure a chave Anthropic na variável ANTHROPIC_KEY no arquivo HTML.</div>';
+    result.innerHTML='<div class="warn-box"><div class="callout-label red">Erro ao gerar análise</div>'+err.message+'<br><br><strong>Solução:</strong> Abra o Painel do Professor e cole a chave Anthropic no campo 🔑.</div>';
   });
 }
 
@@ -1301,7 +1301,7 @@ function runAgenticCommerce(){
   }).catch(function(err){
     btn.disabled=false; btn.innerHTML='🤖 Simular Jornada Agentic';
     result.style.display='block';
-    result.innerHTML='<div class="warn-box"><div class="callout-label red">Erro</div>'+err.message+'<br><br><strong>Solução:</strong> Configure a chave Anthropic na variável ANTHROPIC_KEY no arquivo HTML.</div>';
+    result.innerHTML='<div class="warn-box"><div class="callout-label red">Erro</div>'+err.message+'<br><br><strong>Solução:</strong> Abra o Painel do Professor e cole a chave Anthropic no campo 🔑.</div>';
   });
 }
 
@@ -1804,40 +1804,49 @@ function openCase(id){
 var SB_URL  = 'https://rvxmcvjgquiocmaqajxx.supabase.co';
 var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ2eG1jdmpncXVpb2NtYXFhanh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1ODYxMDIsImV4cCI6MjA5MzE2MjEwMn0.QmnV158zecB4uMOLcQ5msNA0o6CXQT4nsuIzbWE-1go';
 
-// Chave Anthropic — lida do campo na sidebar (salva no navegador)
-var ANTHROPIC_KEY = localStorage.getItem('anthropic_key') || '';
+// Anthropic via Supabase Edge Function (chave segura no servidor)
+var ANTHROPIC_KEY = ''; // chave armazenada no Supabase Secrets — não fica exposta aqui
+var AI_PROXY_URL  = SB_URL + '/functions/v1/anthropic-proxy';
 
 function claudeAI(prompt, maxTokens) {
-  // Sempre lê do campo atual (permite atualizar sem recarregar)
-  var keyField = document.getElementById('anthropic-key-input');
-  if(keyField && keyField.value.trim()) {
-    ANTHROPIC_KEY = keyField.value.trim();
-    localStorage.setItem('anthropic_key', ANTHROPIC_KEY);
-  }
-  if(!ANTHROPIC_KEY) {
-    return Promise.reject(new Error('Cole sua chave Anthropic no campo "🔑 Chave IA" na barra lateral direita.'));
-  }
-  return fetch('https://api.anthropic.com/v1/messages', {
+  var saved = localStorage.getItem('anthropic_key');
+  if(saved && saved.startsWith('sk-ant-')) ANTHROPIC_KEY = saved;
+
+  var payload = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens || 1800,
+    messages: [{ role: 'user', content: prompt }]
+  };
+
+  return fetch(AI_PROXY_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': ANTHROPIC_KEY,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-calls': 'true'
+      'Authorization': 'Bearer ' + SB_KEY,
+      'apikey': SB_KEY
     },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens || 1800,
-      messages: [{ role: 'user', content: prompt }]
-    })
+    body: JSON.stringify(payload)
   })
   .then(function(r) {
-    if(!r.ok) return r.json().then(function(e){ throw new Error(e.error&&e.error.message||'HTTP '+r.status); });
+    if(!r.ok) return r.json().then(function(e){
+      var msg = e.error || e.message || 'HTTP '+r.status;
+      throw new Error('Proxy: '+JSON.stringify(msg));
+    });
     return r.json();
   })
   .then(function(data) {
+    if(data.error) throw new Error('Anthropic: '+(data.error.message||JSON.stringify(data.error)));
     var text = (data.content&&data.content[0]&&data.content[0].text)||'';
+    if(!text) throw new Error('Resposta vazia. Verifique se a Edge Function "anthropic-proxy" está deployada no Supabase.');
     return JSON.parse(text.replace(/```json|```/g,'').trim());
+  })
+  .catch(function(err){
+    // Se o proxy falhar, mostra mensagem clara
+    var msg = err.message || 'Erro desconhecido';
+    if(msg.indexOf('Failed to fetch') > -1 || msg.indexOf('NetworkError') > -1){
+      throw new Error('Edge Function não encontrada. Verifique se "anthropic-proxy" está deployada em: Supabase → Edge Functions.');
+    }
+    throw err;
   });
 }
 
@@ -2040,15 +2049,14 @@ function applyState(s){
 /* ── SAVE ── */
 function saveAnthropicKey(val){
   val = val.trim();
-  ANTHROPIC_KEY = val;
   var msg = document.getElementById('key-status-msg');
-  if(!msg) return;
-  if(!val){ msg.textContent=''; return; }
+  if(!val){ if(msg) msg.textContent=''; return; }
   if(val.startsWith('sk-ant-')){
+    ANTHROPIC_KEY = val;
     localStorage.setItem('anthropic_key', val);
-    msg.innerHTML='<span style="color:#34D399;">✓ Chave salva — IA pronta para usar</span>';
+    if(msg) msg.innerHTML='<span style="color:#34D399;">✓ Chave salva — IA pronta para usar</span>';
   } else {
-    msg.innerHTML='<span style="color:#FCA5A5;">⚠ Deve começar com sk-ant-</span>';
+    if(msg) msg.innerHTML='<span style="color:#FCA5A5;">⚠ Deve começar com sk-ant-</span>';
   }
 }
 
@@ -2103,8 +2111,8 @@ function saveNow(manual){
     // UPDATE existing row
     promise = sbFetch('mba_sessoes?id=eq.'+currentSessionId, 'PATCH', payload);
   } else {
-    // INSERT new row — upsert by nome_grupo to avoid duplicates
-    promise = sbFetch('mba_sessoes', 'POST', payload, 'resolution=merge-duplicates')
+    // UPSERT by nome_grupo — updates if exists, inserts if not
+    promise = sbFetch('mba_sessoes', 'POST', payload, 'resolution=merge-duplicates,return=representation')
       .then(function(res){
         var row = Array.isArray(res)?res[0]:res;
         if(row && row.id){ currentSessionId = row.id; }
