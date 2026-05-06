@@ -1812,7 +1812,12 @@ function claudeAI(prompt, maxTokens) {
   var saved = localStorage.getItem('anthropic_key');
   if(saved && saved.startsWith('sk-ant-')) ANTHROPIC_KEY = saved;
 
+  if(!ANTHROPIC_KEY) {
+    return Promise.reject(new Error('Configure a chave Anthropic no Painel do Professor.'));
+  }
+
   var payload = {
+    _anthropic_key: ANTHROPIC_KEY,
     model: 'claude-sonnet-4-20250514',
     max_tokens: maxTokens || 1800,
     messages: [{ role: 'user', content: prompt }]
