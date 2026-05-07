@@ -1197,6 +1197,9 @@ function runPersonaAI(){
     renderPersonaCard(json,pName,pAge,pLoc,pCh);
     btn.disabled=false; btn.textContent='✨ Regenerar Análise';
     totalScore+=80; document.getElementById('score-display').textContent=totalScore; isDirty=true;
+    // Salvar resultado da persona IA no Supabase
+    personaIAResult = json;
+    saveNow(false);
   }).catch(function(err){
     btn.disabled=false; btn.textContent='✨ Analisar Persona com IA';
     result.style.display='block';
@@ -1298,6 +1301,9 @@ function runAgenticCommerce(){
     renderAgenticResult(json,brand);
     btn.disabled=false; btn.innerHTML='🤖 Simular Novamente';
     totalScore+=100; document.getElementById('score-display').textContent=totalScore; isDirty=true;
+    // Salvar resultado do agentic commerce no Supabase
+    agenticResult = json;
+    saveNow(false);
   }).catch(function(err){
     btn.disabled=false; btn.innerHTML='🤖 Simular Jornada Agentic';
     result.style.display='block';
@@ -1860,6 +1866,8 @@ var autoSaveInterval = null;
 var lastSaveTime     = null;
 var saveInProgress   = false;
 var isDirty          = false;   // flag: alguma coisa mudou desde o último save
+var personaIAResult  = null;    // resultado da análise de persona com IA
+var agenticResult    = null;    // resultado da simulação agentic commerce
 
 /* ── Marca dirty em qualquer input da página ── */
 document.addEventListener('input',  function(){ isDirty=true; });
@@ -2047,6 +2055,21 @@ function applyState(s){
   if(s.score_total){ totalScore=s.score_total; document.getElementById('score-display').textContent=totalScore; }
   if(s.fase_atual){ goTo(s.fase_atual); }
 
+  // restaurar resultados de IA se existirem
+  if(s.persona_ia && Object.keys(s.persona_ia).length>0){
+    personaIAResult = s.persona_ia;
+    var pName=(document.getElementById('persona-name')||{}).value||'';
+    var pAge=(document.getElementById('persona-age')||{}).value||'';
+    var pLoc=(document.getElementById('persona-location')||{}).value||'';
+    var pCh=(document.getElementById('persona-channel')||{}).value||'';
+    try{ renderPersonaCard(s.persona_ia, pName, pAge, pLoc, pCh); }catch(e){}
+  }
+  if(s.agentic_result && Object.keys(s.agentic_result).length>0){
+    agenticResult = s.agentic_result;
+    var brand=(document.getElementById('brand-name')||{}).value||'a marca';
+    try{ renderAgenticResult(s.agentic_result, brand); }catch(e){}
+  }
+
   // sync derived UI
   syncBrand(); syncPersona(); updateSwotPreviews();
 }
@@ -2097,18 +2120,20 @@ function saveNow(manual){
   var state = collectState();
   // Build flat payload matching mba_sessoes columns exactly
   var payload = {
-    nome_grupo:   nome.trim(),
-    integrantes:  (document.getElementById('members-input')||{}).value||'',
-    fase_atual:   state.fase_atual,
-    score_total:  state.score_total,
-    fase1:        state.fase1,
-    fase2:        state.fase2,
-    fase3:        state.fase3,
-    fase4:        state.fase4,
-    fase5:        state.fase5,
-    fase6:        state.fase6,
-    swot_actions: state.swot_actions,
-    plan_actions: state.plan_actions
+    nome_grupo:     nome.trim(),
+    integrantes:    (document.getElementById('members-input')||{}).value||'',
+    fase_atual:     state.fase_atual,
+    score_total:    state.score_total,
+    fase1:          state.fase1,
+    fase2:          state.fase2,
+    fase3:          state.fase3,
+    fase4:          state.fase4,
+    fase5:          state.fase5,
+    fase6:          state.fase6,
+    swot_actions:   state.swot_actions,
+    plan_actions:   state.plan_actions,
+    persona_ia:     personaIAResult  || {},
+    agentic_result: agenticResult    || {}
   };
 
   var promise;
