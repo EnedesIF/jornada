@@ -58,6 +58,8 @@ function runPersonaAI(){}
 function runAgenticCommerce(){}
 function saveAnthropicKey(v){}
 function toggleKeyVis(){}
+function analyzeWheel(){}
+function togglePetalGroup(e){}
 function loadSavedKey(){}
 // These have NO main-script definition — keep real impl here:
 function setTip(n){ var el=document.getElementById('phase-tip'); if(el&&typeof phaseTips!=='undefined') el.textContent=phaseTips[n-1]||''; }
@@ -1273,6 +1275,149 @@ function renderPersonaCard(d,name,age,loc){
 }
 
 /* ══════════════════════════════════════
+   WHEEL OF EMOTIONS — PLUTCHIK
+══════════════════════════════════════ */
+var wheelState    = {};  // { joy: true, anger: true, ... }
+var wheelResult   = null;
+
+var PLUTCHIK_EMOTIONS = {
+  joy:          { label:'Alegria',      color:'#FFD700', textColor:'#7a5c00', sub:['Serenidade','Alegria','Êxtase'] },
+  trust:        { label:'Confiança',    color:'#7CB342', textColor:'#2e5b00', sub:['Aceitação','Confiança','Admiração'] },
+  fear:         { label:'Medo',         color:'#43A047', textColor:'#1b4d1b', sub:['Apreensão','Medo','Terror'] },
+  surprise:     { label:'Surpresa',     color:'#90A4AE', textColor:'#2d3e46', sub:['Distração','Surpresa','Espanto'] },
+  sadness:      { label:'Tristeza',     color:'#5C6BC0', textColor:'#1a1f5e', sub:['Pensativo','Tristeza','Pesar'] },
+  disgust:      { label:'Desgosto',     color:'#BA68C8', textColor:'#4a0066', sub:['Tédio','Desgosto','Repulsa'] },
+  anger:        { label:'Raiva',        color:'#EF5350', textColor:'#7f0000', sub:['Aborrecimento','Raiva','Fúria'] },
+  anticipation: { label:'Antecipação',  color:'#FFA726', textColor:'#6d3b00', sub:['Interesse','Antecipação','Vigilância'] }
+};
+
+function togglePetalGroup(emotion){
+  wheelState[emotion] = !wheelState[emotion];
+  renderWheelHighlights();
+  renderWheelTags();
+  isDirty = true;
+}
+
+function renderWheelHighlights(){
+  var hl = document.getElementById('wheel-highlights');
+  if(!hl) return;
+  var paths = {
+    joy:          'M170,170 L231,52 A130,130 0 0,1 289,118 Z',
+    trust:        'M170,170 L289,118 A130,130 0 0,1 289,222 Z',
+    fear:         'M170,170 L289,222 A130,130 0 0,1 231,288 Z',
+    surprise:     'M170,170 L231,288 A130,130 0 0,1 109,288 Z',
+    sadness:      'M170,170 L109,288 A130,130 0 0,1 51,222 Z',
+    disgust:      'M170,170 L51,222 A130,130 0 0,1 51,118 Z',
+    anger:        'M170,170 L51,118 A130,130 0 0,1 109,52 Z',
+    anticipation: 'M170,170 L109,52 A130,130 0 0,1 231,52 Z'
+  };
+  var html = '';
+  Object.keys(wheelState).forEach(function(e){
+    if(wheelState[e] && paths[e]){
+      var em = PLUTCHIK_EMOTIONS[e];
+      html += '<path d="'+paths[e]+'" fill="'+em.color+'" opacity="0.45" filter="url(#glow)" style="pointer-events:none;"/>';
+    }
+  });
+  hl.innerHTML = html;
+}
+
+function renderWheelTags(){
+  var tags = document.getElementById('wheel-tags');
+  if(!tags) return;
+  var active = Object.keys(wheelState).filter(function(e){ return wheelState[e]; });
+  if(active.length === 0){
+    tags.innerHTML = '<span style="font-size:11px;color:var(--dim);font-style:italic;">Nenhuma selecionada</span>';
+    return;
+  }
+  tags.innerHTML = active.map(function(e){
+    var em = PLUTCHIK_EMOTIONS[e];
+    return '<span style="background:'+em.color+';color:'+em.textColor+';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">'+em.label+'</span>';
+  }).join('');
+}
+
+function analyzeWheel(){
+  var btn  = document.getElementById('wheel-btn');
+  var pName       = (document.getElementById('persona-name')||{}).value||'a persona';
+  var pPains      = (document.getElementById('persona-pains')||{}).value||'';
+  var pMotiv      = (document.getElementById('persona-motivations')||{}).value||'';
+  var pObj        = (document.getElementById('persona-objection')||{}).value||'';
+  var brand       = (document.getElementById('brand-name')||{}).value||'a marca';
+  var sector      = (document.getElementById('brand-sector')||{}).value||'varejo';
+
+  if(!pPains.trim() && !pMotiv.trim()){
+    alert('Preencha as dores e motivações da persona antes de analisar.');
+    return;
+  }
+
+  btn.disabled = true; btn.textContent = '⏳ Mapeando emoções...';
+  document.getElementById('wheel-result').style.display = 'none';
+
+  var prompt = 'Você é especialista em psicologia do consumidor e no modelo de Plutchik.\n\n'
+    + 'PERSONA: '+pName+' | MARCA: '+brand+' | SETOR: '+sector+'\n'
+    + 'Dores: '+pPains+'\nMotivações: '+pMotiv+'\nObjeção: '+pObj+'\n\n'
+    + 'Responda APENAS com JSON válido sem markdown:\n'
+    + '{"emocoes_dominantes":["joy","trust","fear","surprise","sadness","disgust","anger","anticipation"],'
+    + '"analise":"2 parágrafos explicando quais emoções dominam esta persona no contexto de compra e por quê — use os nomes em português das emoções de Plutchik",'
+    + '"tom_comunicacao":["palavra1","palavra2","palavra3","palavra4"],'
+    + '"gatilhos":["gatilho 1 concreto","gatilho 2 concreto","gatilho 3 concreto"]}\n\n'
+    + 'emocoes_dominantes: array com 2 a 4 das 8 emoções primárias (use os nomes em inglês: joy, trust, fear, surprise, sadness, disgust, anger, anticipation).\n'
+    + 'tom_comunicacao: 4 adjetivos/palavras que definem o tom ideal de comunicação para esta persona.\n'
+    + 'gatilhos: 3 gatilhos emocionais concretos e específicos para esta persona comprar.';
+
+  claudeAI(prompt, 600)
+  .then(function(data){
+    // parse JSON da resposta
+    var text = '';
+    if(typeof data === 'object' && data.content){
+      text = data.content[0].text;
+    } else if(typeof data === 'string'){
+      text = data;
+    }
+    var clean = text.replace(/```json|```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    // Highlight no wheel
+    wheelState = {};
+    (parsed.emocoes_dominantes||[]).forEach(function(e){ wheelState[e] = true; });
+    renderWheelHighlights();
+    renderWheelTags();
+
+    // Análise textual
+    var result  = document.getElementById('wheel-result');
+    var aiText  = document.getElementById('wheel-ai-text');
+    var toneDiv = document.getElementById('wheel-tone');
+    var toneTags= document.getElementById('wheel-tone-tags');
+    var trigDiv = document.getElementById('wheel-triggers');
+    var trigList= document.getElementById('wheel-trigger-list');
+
+    result.style.display = 'block';
+    aiText.innerHTML = '<p>'+parsed.analise.replace(/\n\n/g,'</p><p style="margin-top:8px;">')+'</p>';
+
+    if(parsed.tom_comunicacao && parsed.tom_comunicacao.length){
+      toneDiv.style.display='block';
+      toneTags.innerHTML = parsed.tom_comunicacao.map(function(t){
+        return '<span style="background:#EDE9FE;color:#5B21B6;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">'+t+'</span>';
+      }).join('');
+    }
+
+    if(parsed.gatilhos && parsed.gatilhos.length){
+      trigDiv.style.display='block';
+      trigList.innerHTML = parsed.gatilhos.map(function(g,i){
+        return '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="color:#7C3AED;font-weight:800;flex-shrink:0;">'+(i+1)+'.</span><span>'+g+'</span></div>';
+      }).join('');
+    }
+
+    btn.disabled=false; btn.textContent='🔄 Reanalisar';
+    wheelResult = parsed;
+    saveNow(false);
+  }).catch(function(err){
+    document.getElementById('wheel-result').style.display='block';
+    document.getElementById('wheel-ai-text').textContent='Erro: '+err.message;
+    btn.disabled=false; btn.textContent='🎡 Analisar com IA';
+  });
+}
+
+/* ══════════════════════════════════════
    PAR & BAR CALCULATOR
 ══════════════════════════════════════ */
 var parBarResult = null;
@@ -2198,7 +2343,8 @@ function collectState(){
       feedback_neg: val('feedback-neg')
     },
     par_bar:    parBarResult || {},
-    cjm_result: cjmResult    || {}
+    cjm_result: cjmResult    || {},
+    wheel:      { state: wheelState, result: wheelResult || {} }
   };
 }
 
@@ -2295,6 +2441,33 @@ function applyState(s){
   // score + phase
   if(s.score_total){ totalScore=s.score_total; document.getElementById('score-display').textContent=totalScore; }
   if(s.fase_atual){ goTo(s.fase_atual); }
+
+  // restaurar Wheel of Emotions
+  if(s.wheel && s.wheel.state){
+    wheelState  = s.wheel.state;
+    wheelResult = s.wheel.result || null;
+    renderWheelHighlights();
+    renderWheelTags();
+    if(wheelResult && wheelResult.analise){
+      var wr = document.getElementById('wheel-result');
+      if(wr){
+        wr.style.display='block';
+        document.getElementById('wheel-ai-text').innerHTML='<p>'+wheelResult.analise.replace(/\n\n/g,'</p><p style="margin-top:8px;">')+'</p>';
+        if(wheelResult.tom_comunicacao){
+          document.getElementById('wheel-tone').style.display='block';
+          document.getElementById('wheel-tone-tags').innerHTML=wheelResult.tom_comunicacao.map(function(t){
+            return '<span style="background:#EDE9FE;color:#5B21B6;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;">'+t+'</span>';
+          }).join('');
+        }
+        if(wheelResult.gatilhos){
+          document.getElementById('wheel-triggers').style.display='block';
+          document.getElementById('wheel-trigger-list').innerHTML=wheelResult.gatilhos.map(function(g,i){
+            return '<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;"><span style="color:#7C3AED;font-weight:800;flex-shrink:0;">'+(i+1)+'.</span><span>'+g+'</span></div>';
+          }).join('');
+        }
+      }
+    }
+  }
 
   // restaurar PAR & BAR
   if(s.par_bar && s.par_bar.par){
@@ -2395,6 +2568,7 @@ function saveNow(manual){
     plan_actions:   state.plan_actions,
     par_bar:        state.par_bar        || {},
     cjm_result:     state.cjm_result     || {},
+    wheel:          state.wheel          || {},
     persona_ia:     personaIAResult      || {},
     agentic_result: agenticResult        || {}
   };
@@ -3071,6 +3245,139 @@ setTimeout(function(){
       <div class="f-lbl">Principal Objeção de Compra</div>
       <div class="f-hint">O que impede ela de comprar mais frequentemente ou de indicar a marca?</div>
       <textarea class="finput" id="persona-objection" placeholder="Ex: Desconfia que o preço online é mais barato. Prefere o app do concorrente que tem histórico de compras." style="min-height:48px;margin-top:6px;"></textarea>
+    </div>
+  </div>
+
+  <!-- ── WHEEL OF EMOTIONS ─────────────────────── -->
+  <div class="sec-block" style="margin-top:20px;">
+    <div class="sec-lbl">1.4 Wheel of Emotions — Plutchik</div>
+    <div class="info-box" style="margin-bottom:20px;">
+      <div class="callout-label blue">🎡 Como funciona</div>
+      Com base nas dores, motivações e objeções da persona, a IA identifica as emoções dominantes no modelo de Robert Plutchik — o mapa emocional mais usado em psicologia do consumidor. As emoções destacadas orientam o tom de comunicação e os gatilhos de compra.
+    </div>
+
+    <!-- Wheel SVG -->
+    <div style="display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;">
+      <div style="flex-shrink:0;">
+        <svg id="plutchik-wheel" width="340" height="340" viewBox="0 0 340 340" style="display:block;">
+          <defs>
+            <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <!-- 8 pétalas base — cada uma é um path de setor com 3 anéis -->
+          <!-- Joy -->
+          <g class="petal-group" data-emotion="joy" onclick="togglePetalGroup('joy')" style="cursor:pointer;">
+            <path d="M170,170 L231,52 A130,130 0 0,1 289,118 Z" fill="#FFE066" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L213,83 A90,90 0 0,1 253,133 Z" fill="#FFD700" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L196,113 A50,50 0 0,1 218,148 Z" fill="#FFC200" stroke="#fff" stroke-width="1.5"/>
+            <text x="245" y="78" font-size="9" font-weight="700" fill="#7a5c00" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,245,78)">SERENIDADE</text>
+            <text x="262" y="100" font-size="9" font-weight="700" fill="#7a5c00" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,262,100)">ALEGRIA</text>
+            <text x="278" y="126" font-size="9" font-weight="700" fill="#7a5c00" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,278,126)">ÊXTASE</text>
+          </g>
+          <!-- Trust -->
+          <g class="petal-group" data-emotion="trust" onclick="togglePetalGroup('trust')" style="cursor:pointer;">
+            <path d="M170,170 L289,118 A130,130 0 0,1 289,222 Z" fill="#8BC34A" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L253,133 A90,90 0 0,1 253,207 Z" fill="#7CB342" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L218,148 A50,50 0 0,1 218,192 Z" fill="#689F38" stroke="#fff" stroke-width="1.5"/>
+            <text x="296" y="155" font-size="9" font-weight="700" fill="#2e5b00" font-family="sans-serif" text-anchor="middle" transform="rotate(0,296,155)">ACEITAÇÃO</text>
+            <text x="296" y="170" font-size="9" font-weight="700" fill="#2e5b00" font-family="sans-serif" text-anchor="middle">CONFIANÇA</text>
+            <text x="296" y="185" font-size="9" font-weight="700" fill="#2e5b00" font-family="sans-serif" text-anchor="middle">ADMIRAÇÃO</text>
+          </g>
+          <!-- Fear -->
+          <g class="petal-group" data-emotion="fear" onclick="togglePetalGroup('fear')" style="cursor:pointer;">
+            <path d="M170,170 L289,222 A130,130 0 0,1 231,288 Z" fill="#66BB6A" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L253,207 A90,90 0 0,1 213,257 Z" fill="#43A047" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L218,192 A50,50 0 0,1 196,222 Z" fill="#388E3C" stroke="#fff" stroke-width="1.5"/>
+            <text x="264" y="248" font-size="9" font-weight="700" fill="#1b4d1b" font-family="sans-serif" text-anchor="middle" transform="rotate(45,264,248)">APREENSÃO</text>
+            <text x="244" y="268" font-size="9" font-weight="700" fill="#1b4d1b" font-family="sans-serif" text-anchor="middle" transform="rotate(45,244,268)">MEDO</text>
+            <text x="222" y="286" font-size="9" font-weight="700" fill="#1b4d1b" font-family="sans-serif" text-anchor="middle" transform="rotate(45,222,286)">TERROR</text>
+          </g>
+          <!-- Surprise -->
+          <g class="petal-group" data-emotion="surprise" onclick="togglePetalGroup('surprise')" style="cursor:pointer;">
+            <path d="M170,170 L231,288 A130,130 0 0,1 109,288 Z" fill="#B0BEC5" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L213,257 A90,90 0 0,1 127,257 Z" fill="#90A4AE" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L196,222 A50,50 0 0,1 144,222 Z" fill="#78909C" stroke="#fff" stroke-width="1.5"/>
+            <text x="170" y="299" font-size="9" font-weight="700" fill="#2d3e46" font-family="sans-serif" text-anchor="middle">DISTRAÇÃO</text>
+            <text x="170" y="310" font-size="9" font-weight="700" fill="#2d3e46" font-family="sans-serif" text-anchor="middle">SURPRESA</text>
+            <text x="170" y="321" font-size="9" font-weight="700" fill="#2d3e46" font-family="sans-serif" text-anchor="middle">ESPANTO</text>
+          </g>
+          <!-- Sadness -->
+          <g class="petal-group" data-emotion="sadness" onclick="togglePetalGroup('sadness')" style="cursor:pointer;">
+            <path d="M170,170 L109,288 A130,130 0 0,1 51,222 Z" fill="#7986CB" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L127,257 A90,90 0 0,1 87,207 Z" fill="#5C6BC0" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L144,222 A50,50 0 0,1 122,192 Z" fill="#3F51B5" stroke="#fff" stroke-width="1.5"/>
+            <text x="76" y="266" font-size="9" font-weight="700" fill="#1a1f5e" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,76,266)">PENSATIVO</text>
+            <text x="58" y="244" font-size="9" font-weight="700" fill="#1a1f5e" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,58,244)">TRISTEZA</text>
+            <text x="42" y="222" font-size="9" font-weight="700" fill="#1a1f5e" font-family="sans-serif" text-anchor="middle" transform="rotate(-45,42,222)">PESAR</text>
+          </g>
+          <!-- Disgust -->
+          <g class="petal-group" data-emotion="disgust" onclick="togglePetalGroup('disgust')" style="cursor:pointer;">
+            <path d="M170,170 L51,222 A130,130 0 0,1 51,118 Z" fill="#CE93D8" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L87,207 A90,90 0 0,1 87,133 Z" fill="#BA68C8" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L122,192 A50,50 0 0,1 122,148 Z" fill="#AB47BC" stroke="#fff" stroke-width="1.5"/>
+            <text x="44" y="185" font-size="9" font-weight="700" fill="#4a0066" font-family="sans-serif" text-anchor="middle">TÉDIO</text>
+            <text x="44" y="170" font-size="9" font-weight="700" fill="#4a0066" font-family="sans-serif" text-anchor="middle">DESGOSTO</text>
+            <text x="44" y="155" font-size="9" font-weight="700" fill="#4a0066" font-family="sans-serif" text-anchor="middle">REPULSA</text>
+          </g>
+          <!-- Anger -->
+          <g class="petal-group" data-emotion="anger" onclick="togglePetalGroup('anger')" style="cursor:pointer;">
+            <path d="M170,170 L51,118 A130,130 0 0,1 109,52 Z" fill="#EF9A9A" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L87,133 A90,90 0 0,1 127,83 Z" fill="#EF5350" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L122,148 A50,50 0 0,1 144,118 Z" fill="#E53935" stroke="#fff" stroke-width="1.5"/>
+            <text x="76" y="92" font-size="9" font-weight="700" fill="#7f0000" font-family="sans-serif" text-anchor="middle" transform="rotate(45,76,92)">ABORRECIMENTO</text>
+            <text x="96" y="72" font-size="9" font-weight="700" fill="#7f0000" font-family="sans-serif" text-anchor="middle" transform="rotate(45,96,72)">RAIVA</text>
+            <text x="116" y="54" font-size="9" font-weight="700" fill="#7f0000" font-family="sans-serif" text-anchor="middle" transform="rotate(45,116,54)">FÚRIA</text>
+          </g>
+          <!-- Anticipation -->
+          <g class="petal-group" data-emotion="anticipation" onclick="togglePetalGroup('anticipation')" style="cursor:pointer;">
+            <path d="M170,170 L109,52 A130,130 0 0,1 231,52 Z" fill="#FFCC80" stroke="#fff" stroke-width="1.5" opacity="0.95"/>
+            <path d="M170,170 L127,83 A90,90 0 0,1 213,83 Z" fill="#FFA726" stroke="#fff" stroke-width="1.5"/>
+            <path d="M170,170 L144,118 A50,50 0 0,1 196,118 Z" fill="#FB8C00" stroke="#fff" stroke-width="1.5"/>
+            <text x="170" y="41" font-size="9" font-weight="700" fill="#6d3b00" font-family="sans-serif" text-anchor="middle">INTERESSE</text>
+            <text x="170" y="30" font-size="9" font-weight="700" fill="#6d3b00" font-family="sans-serif" text-anchor="middle">ANTECIPAÇÃO</text>
+            <text x="170" y="19" font-size="9" font-weight="700" fill="#6d3b00" font-family="sans-serif" text-anchor="middle">VIGILÂNCIA</text>
+          </g>
+          <!-- Centro -->
+          <circle cx="170" cy="170" r="40" fill="#fff" stroke="#E5E7EB" stroke-width="2"/>
+          <text x="170" y="166" font-size="10" font-weight="800" fill="#374151" font-family="sans-serif" text-anchor="middle">PERSONA</text>
+          <text x="170" y="179" font-size="9" fill="#9CA3AF" font-family="sans-serif" text-anchor="middle">Plutchik</text>
+          <!-- Highlights overlay (manipulados via JS) -->
+          <g id="wheel-highlights"></g>
+        </svg>
+        <div style="font-size:10px;color:var(--dim);text-align:center;margin-top:4px;">Clique nas pétalas para selecionar manualmente</div>
+      </div>
+
+      <!-- Painel lateral -->
+      <div style="flex:1;min-width:220px;">
+        <button onclick="analyzeWheel()" id="wheel-btn" style="width:100%;background:linear-gradient(135deg,#7C3AED,#5B21B6);color:#fff;border:none;border-radius:3px;padding:12px 20px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:16px;">
+          🎡 ANALISAR COM IA
+        </button>
+
+        <!-- Emoções selecionadas -->
+        <div style="margin-bottom:14px;">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px;">Emoções Dominantes</div>
+          <div id="wheel-tags" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;">
+            <span style="font-size:11px;color:var(--dim);font-style:italic;">A IA vai identificar após análise</span>
+          </div>
+        </div>
+
+        <!-- Resultado IA -->
+        <div id="wheel-result" style="display:none;background:var(--surf);border:1px solid var(--border);border-radius:4px;padding:16px;">
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#7C3AED;font-weight:700;margin-bottom:10px;">✨ Análise Emocional da Persona</div>
+          <div id="wheel-ai-text" style="font-size:12px;color:var(--mid);line-height:1.8;"></div>
+
+          <!-- Tom de comunicação recomendado -->
+          <div id="wheel-tone" style="margin-top:14px;display:none;">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px;">🎯 Tom de Comunicação Recomendado</div>
+            <div id="wheel-tone-tags" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+
+          <!-- Gatilhos de compra -->
+          <div id="wheel-triggers" style="margin-top:14px;display:none;">
+            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px;">⚡ Gatilhos Emocionais de Compra</div>
+            <div id="wheel-trigger-list" style="font-size:12px;color:var(--mid);line-height:1.8;"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
