@@ -56,6 +56,8 @@ function applyPesoState(d){}
 function renderPesoDashboard(r,c){}
 function runPersonaAI(){}
 function runAgenticCommerce(){}
+function generateNSM(){}
+function saveCustomNSM(){}
 function saveAnthropicKey(v){}
 function toggleKeyVis(){}
 function analyzeWheel(){}
@@ -1712,10 +1714,182 @@ function renderCJM(d, pName, brand){
 
 
 /* ══════════════════════════════════════
+   NORTH STAR METRIC
+══════════════════════════════════════ */
+var nsmResult = null;
+
+function generateNSM(){
+  var btn = document.getElementById('nsm-btn');
+  var result = document.getElementById('nsm-result');
+
+  var brand      = (document.getElementById('brand-name')||{}).value||'a marca';
+  var sector     = (document.getElementById('brand-sector')||{}).value||'varejo';
+  var pName      = (document.getElementById('persona-name')||{}).value||'a persona';
+  var pAge       = (document.getElementById('persona-age')||{}).value||'';
+  var pOccup     = (document.getElementById('persona-occupation')||{}).value||'';
+  var pPains     = (document.getElementById('persona-pains')||{}).value||'';
+  var pMotiv     = (document.getElementById('persona-motivations')||{}).value||'';
+  var value      = (document.getElementById('brand-value')||{}).value||'';
+  var h1         = (document.getElementById('h1')||{}).value||'';
+  var h2         = (document.getElementById('h2')||{}).value||'';
+  var kpis       = (document.getElementById('kpi-input')||{}).value||'';
+  var parInfo    = '';
+  try{ var pb=JSON.parse(localStorage.getItem('par_bar_cache')||'{}'); if(pb.par) parInfo='PAR '+pb.par.toFixed(1)+'% / BAR '+pb.bar.toFixed(1)+'%'; }catch(e){}
+
+  var activeTps = [];
+  if(typeof stageData !== 'undefined'){
+    stageData.forEach(function(s){
+      (s.tps||[]).forEach(function(l,i){ if(tpState[s.id+'_'+i]>0) activeTps.push(l); });
+    });
+  }
+
+  if(!brand.trim() || brand === 'a marca'){
+    alert('Preencha o nome da marca na Fase 1 antes de gerar a NSM.');
+    return;
+  }
+
+  btn.disabled=true; btn.textContent='⏳ Calculando North Star...';
+  result.style.display='none';
+
+  var prompt = 'Você é especialista em estratégia de crescimento e métricas para MBA.\n\n'
+    + 'CONTEXTO COMPLETO DA MARCA:\n'
+    + 'Marca: '+brand+' | Setor: '+sector+'\n'
+    + 'Persona: '+pName+' ('+pAge+', '+pOccup+')\n'
+    + 'Dores da persona: '+pPains+'\n'
+    + 'Motivações: '+pMotiv+'\n'
+    + 'Proposta de valor: '+value+'\n'
+    + 'Touchpoints ativos: '+(activeTps.join(', ')||'não mapeados')+'\n'
+    + (parInfo ? 'Métricas de funil: '+parInfo+'\n' : '')
+    + 'Horizonte 1 (agora): '+h1+'\n'
+    + 'Horizonte 2 (6-12m): '+h2+'\n'
+    + 'KPIs definidos: '+kpis+'\n\n'
+    + 'Defina a North Star Metric ideal para esta marca. Responda APENAS com JSON válido sem markdown:\n'
+    + '{\n'
+    + '  "nsm": "A métrica em uma frase clara e mensurável (ex: número de clientes que compram pela 2ª vez em 60 dias)",\n'
+    + '  "categoria": "Retenção|Ativação|Receita|Engajamento|Referência",\n'
+    + '  "por_que_essa": "2-3 frases explicando por que esta métrica captura o valor central da marca para esta persona",\n'
+    + '  "momento_aha": "O momento exato em que a persona percebe o valor real da marca — específico e humano",\n'
+    + '  "meta_90_dias": "Meta concreta e realista para os primeiros 90 dias",\n'
+    + '  "metricas_suporte": [\n'
+    + '    {"nome": "métrica 1", "tipo": "Input|Output", "descricao": "como medir e por que importa"},\n'
+    + '    {"nome": "métrica 2", "tipo": "Input|Output", "descricao": "como medir e por que importa"},\n'
+    + '    {"nome": "métrica 3", "tipo": "Input|Output", "descricao": "como medir e por que importa"}\n'
+    + '  ],\n'
+    + '  "o_que_nao_medir": "A métrica-armadilha mais comum neste setor que parece importante mas distrai do crescimento real",\n'
+    + '  "frase_norte": "Uma frase de guerra curta e memorável que resume o objetivo da marca (ex: Cada cliente volta em 60 dias)"\n'
+    + '}';
+
+  claudeAI(prompt, 1000)
+  .then(function(parsed){
+    renderNSM(parsed, brand);
+    btn.disabled=false; btn.textContent='🔄 Regenerar NSM';
+    nsmResult = parsed;
+    document.getElementById('nsm-manual').style.display='block';
+    saveNow(false);
+  }).catch(function(err){
+    result.style.display='block';
+    result.innerHTML='<div class="warn-box"><div class="callout-label red">Erro ao gerar NSM</div>'+err.message+'</div>';
+    btn.disabled=false; btn.textContent='⭐ Gerar North Star Metric';
+  });
+}
+
+function renderNSM(d, brand){
+  var el = document.getElementById('nsm-result');
+  el.style.display='block';
+
+  var catColors = {
+    'Retenção':   {bg:'#EFF6FF', border:'#3B82F6', color:'#1D4ED8'},
+    'Ativação':   {bg:'#F0FDF4', border:'#22C55E', color:'#15803D'},
+    'Receita':    {bg:'#FFF7ED', border:'#F97316', color:'#C2410C'},
+    'Engajamento':{bg:'#FDF4FF', border:'#A855F7', color:'#7C3AED'},
+    'Referência': {bg:'#FFF1F2', border:'#F43F5E', color:'#BE123C'}
+  };
+  var cat = d.categoria || 'Engajamento';
+  var cc  = catColors[cat] || catColors['Engajamento'];
+
+  var suporteHTML = (d.metricas_suporte||[]).map(function(m, i){
+    var tipoBg = m.tipo === 'Input' ? '#DBEAFE' : '#D1FAE5';
+    var tipoCor = m.tipo === 'Input' ? '#1D4ED8' : '#065F46';
+    return '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid #F3F4F6;">'
+      + '<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:'+cc.border+';color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;">'+(i+1)+'</div>'
+      + '<div style="flex:1;">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">'
+      + '<span style="font-size:12px;font-weight:700;color:#374151;">'+m.nome+'</span>'
+      + '<span style="background:'+tipoBg+';color:'+tipoCor+';border-radius:20px;padding:1px 8px;font-size:9px;font-weight:700;">'+m.tipo+'</span>'
+      + '</div>'
+      + '<div style="font-size:11px;color:#6B7280;line-height:1.5;">'+m.descricao+'</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+
+  var html = '<div style="border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);">'
+
+    // Header — NSM principal
+    + '<div style="background:linear-gradient(135deg,#92400E,#F59E0B);padding:24px 28px;color:#fff;">'
+    + '<div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#FEF3C7;margin-bottom:8px;">⭐ North Star Metric — '+brand.toUpperCase()+'</div>'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:28px;line-height:1.2;margin-bottom:12px;">'+d.nsm+'</div>'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+    + '<span style="background:rgba(255,255,255,.2);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;">📂 '+cat+'</span>'
+    + '<span style="background:rgba(255,255,255,.15);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;">🎯 Meta 90d: '+d.meta_90_dias+'</span>'
+    + '</div>'
+    + '</div>'
+
+    // Frase Norte
+    + '<div style="background:#1C1917;padding:14px 28px;text-align:center;">'
+    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:20px;color:#FCD34D;letter-spacing:2px;">🏴 &ldquo;'+d.frase_norte+'&rdquo;</div>'
+    + '</div>'
+
+    // Grid: Por que + Momento Aha
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #E5E7EB;border-top:none;">'
+
+    // Por que essa NSM
+    + '<div style="padding:20px;border-right:1px solid #E5E7EB;">'
+    + '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:'+cc.color+';font-weight:700;margin-bottom:10px;">💡 Por que esta métrica?</div>'
+    + '<div style="font-size:12px;color:#374151;line-height:1.7;">'+d.por_que_essa+'</div>'
+    + '</div>'
+
+    // Momento Aha
+    + '<div style="padding:20px;background:#FFFBEB;">'
+    + '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#D97706;font-weight:700;margin-bottom:10px;">✨ Momento Aha da Persona</div>'
+    + '<div style="font-size:12px;color:#374151;line-height:1.7;font-style:italic;">&ldquo;'+d.momento_aha+'&rdquo;</div>'
+    + '</div>'
+    + '</div>'
+
+    // Métricas de suporte
+    + '<div style="border:1px solid #E5E7EB;border-top:none;padding:20px;">'
+    + '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:4px;">📊 Métricas de Suporte (Inputs que movem a NSM)</div>'
+    + suporteHTML
+    + '</div>'
+
+    // O que NÃO medir
+    + '<div style="border:1px solid #E5E7EB;border-top:none;padding:16px 20px;background:#FEF2F2;display:flex;gap:12px;align-items:flex-start;">'
+    + '<div style="font-size:20px;flex-shrink:0;">🚫</div>'
+    + '<div>'
+    + '<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#DC2626;font-weight:700;margin-bottom:4px;">Métrica-Armadilha — Não Priorize</div>'
+    + '<div style="font-size:12px;color:#374151;line-height:1.6;">'+d.o_que_nao_medir+'</div>'
+    + '</div>'
+    + '</div>'
+
+    + '</div>';
+
+  el.innerHTML = html;
+}
+
+function saveCustomNSM(){
+  var custom = (document.getElementById('nsm-custom')||{}).value||'';
+  if(!custom.trim()) return;
+  if(!nsmResult) nsmResult = {};
+  nsmResult.nsm = custom;
+  renderNSM(nsmResult, (document.getElementById('brand-name')||{}).value||'a marca');
+  saveNow(false);
+}
+
+/* ══════════════════════════════════════
    AGENTIC COMMERCE SIMULATION
 ══════════════════════════════════════ */
 function runAgenticCommerce(){
   var btn=document.getElementById('agentic-btn');
+
   var result=document.getElementById('agentic-result');
   var scenario=(document.getElementById('agentic-scenario')||{}).value||'primeira';
   var competition=(document.getElementById('agentic-competition')||{}).value||'media';
@@ -2393,6 +2567,7 @@ function collectState(){
       case_ref:     val('case-ref'),
       case_learning: val('case-learning')
     },
+    nsm_result: nsmResult || {},
     plan_actions: planActions,
     fase6:{
       scores:       [1,2,3,4,5,6].map(function(i){ return val('e'+i); }),
@@ -2547,6 +2722,13 @@ function applyState(s){
     try{ renderCJM(s.cjm_result, pNameC, brandC); }catch(e){}
   }
 
+  // restaurar NSM
+  if(s.nsm_result && s.nsm_result.nsm){
+    nsmResult = s.nsm_result;
+    var brandN = (document.getElementById('brand-name')||{}).value||'a marca';
+    try{ renderNSM(s.nsm_result, brandN); document.getElementById('nsm-manual').style.display='block'; }catch(e){}
+  }
+
   // restaurar resultados de IA se existirem
   if(s.persona_ia && Object.keys(s.persona_ia).length>0){
     personaIAResult = s.persona_ia;
@@ -2627,6 +2809,7 @@ function saveNow(manual){
     par_bar:        state.par_bar        || {},
     cjm_result:     state.cjm_result     || {},
     wheel:          state.wheel          || {},
+    nsm_result:     nsmResult            || {},
     persona_ia:     personaIAResult      || {},
     agentic_result: agenticResult        || {}
   };
@@ -4079,6 +4262,28 @@ setTimeout(function(){
     <div class="f-wrap" style="margin-top:16px;">
       <div class="f-lbl">Principal Aprendizado do Case para Nossa Estratégia</div>
       <textarea class="finput" id="case-learning" placeholder="Ex: O Boticário levou 3 anos para integrar 4.000 franquias. Para nossa escala menor, podemos fazer em 6 meses, mas precisamos da mesma disciplina de dados centralizados no CRM antes de escalar comunicação." style="min-height:72px;"></textarea>
+    </div>
+  </div>
+
+  <!-- ── NORTH STAR METRIC ─────────────────────── -->
+  <div class="sec-block">
+    <div class="sec-lbl">5.5 North Star Metric — A Única Métrica que Define o Sucesso</div>
+    <div class="info-box" style="margin-bottom:20px;">
+      <div class="callout-label blue">⭐ Como funciona</div>
+      A North Star Metric é a <strong>única métrica</strong> que melhor captura o valor que a marca entrega à persona. Ela orienta toda a equipe em direção ao mesmo objetivo de longo prazo. Com base em tudo que vocês construíram — persona, touchpoints, PAR/BAR, CJM e estratégia — a IA propõe a NSM ideal e as métricas de suporte.
+    </div>
+
+    <button onclick="generateNSM()" id="nsm-btn" style="background:linear-gradient(135deg,#F59E0B,#D97706);color:#fff;border:none;border-radius:3px;padding:14px 28px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:15px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-bottom:20px;">
+      ⭐ GERAR NORTH STAR METRIC
+    </button>
+
+    <div id="nsm-result" style="display:none;"></div>
+
+    <!-- Ajuste manual -->
+    <div id="nsm-manual" style="display:none;margin-top:20px;">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px;">✏️ Ajustar NSM (opcional)</div>
+      <input id="nsm-custom" class="finput" type="text" placeholder="Ex: Número de clientes que compram pela 2ª vez em menos de 60 dias" style="margin-bottom:8px;">
+      <button onclick="saveCustomNSM()" style="background:var(--green);color:#fff;border:none;border-radius:3px;padding:8px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer;">SALVAR AJUSTE</button>
     </div>
   </div>
 
