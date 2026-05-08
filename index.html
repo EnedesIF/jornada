@@ -1586,75 +1586,137 @@ function renderCJM(d, pName, brand){
   var el = document.getElementById('cjm-result');
   el.style.display = 'block';
 
-  var verdColors = {bom:'#D1FAE5;color:#065F46', atencao:'#FEF3C7;color:#92400E', ruim:'#FEE2E2;color:#991B1B'};
-  var verdIcons  = {bom:'✅', atencao:'⚠️', ruim:'❌'};
+  var etapas = d.etapas || [];
+  var n = etapas.length;
+  if(n === 0){ el.innerHTML='<div class="warn-box">Nenhuma etapa retornada.</div>'; return; }
+
+  var stageColors = {
+    'Aware':    {bg:'#EFF6FF', border:'#3B82F6', header:'#1D4ED8', light:'#DBEAFE'},
+    'Appeal':   {bg:'#FDF4FF', border:'#A855F7', header:'#7C3AED', light:'#EDE9FE'},
+    'Ask':      {bg:'#FFF7ED', border:'#F97316', header:'#C2410C', light:'#FFEDD5'},
+    'Act':      {bg:'#F0FDF4', border:'#22C55E', header:'#15803D', light:'#DCFCE7'},
+    'Advocate': {bg:'#FFF1F2', border:'#F43F5E', header:'#BE123C', light:'#FFE4E6'}
+  };
+  var verdIcons = {bom:'✅', atencao:'⚠️', ruim:'❌'};
+  var verdBg    = {bom:'#D1FAE5', atencao:'#FEF3C7', ruim:'#FEE2E2'};
+  var verdColor = {bom:'#065F46', atencao:'#92400E', ruim:'#991B1B'};
   var emocaoEmojis = {
     'curiosa':'🤔','interessada':'😊','ansiosa':'😰','satisfeita':'😌','entusiasmada':'🤩',
     'frustrada':'😤','confusa':'😕','indiferente':'😐','decepcionada':'😞','aliviada':'😅',
     'encantada':'🥰','desconfiada':'🧐','impaciente':'😒','surpresa':'😮','feliz':'😄'
   };
 
-  var stagesHTML = (d.etapas||[]).map(function(e, idx){
-    var vBg  = verdColors[e.veredicto] || verdColors['atencao'];
-    var vIcon = verdIcons[e.veredicto] || '⚠️';
-    var emoji = emocaoEmojis[e.emocao] || '😐';
-    var dots  = '';
-    for(var i=1;i<=5;i++) dots += '<span style="width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:2px;background:'+(i<=e.intensidade?'#7C3AED':'#E5E7EB')+'"></span>';
-    var tpTags = (e.touchpoints||[]).map(function(t){ return '<span style="background:#EDE9FE;color:#5B21B6;border-radius:2px;padding:2px 7px;font-size:10px;font-weight:600;margin-right:4px;margin-bottom:4px;display:inline-block;">'+t+'</span>'; }).join('');
-    var gapHTML = e.gap && e.gap !== 'null' ? '<div style="margin-top:10px;background:#FEF2F2;border-left:3px solid #EF4444;padding:8px 12px;border-radius:0 3px 3px 0;font-size:11px;color:#991B1B;"><strong>Gap:</strong> '+e.gap+'</div>' : '';
-    var connector = idx < (d.etapas.length-1) ? '<div style="text-align:center;color:#7C3AED;font-size:20px;margin:4px 0;">↓</div>' : '';
+  // ── Curva emocional SVG ──────────────────────────
+  var svgW=900, svgH=130, pad=70;
+  var colW = (svgW - pad*2) / Math.max(n-1, 1);
+  var points = etapas.map(function(e,i){
+    var x = pad + i * colW;
+    var y = svgH - 25 - ((e.intensidade||3)-1) * ((svgH-50)/4);
+    return {x:x, y:y, e:e};
+  });
+  var pathD = 'M'+points[0].x+','+points[0].y;
+  for(var pi=1;pi<points.length;pi++){
+    var prev=points[pi-1], curr=points[pi];
+    var cpx=(prev.x+curr.x)/2;
+    pathD+=' C'+cpx+','+prev.y+' '+cpx+','+curr.y+' '+curr.x+','+curr.y;
+  }
+  var areaD = pathD+' L'+points[n-1].x+','+(svgH-8)+' L'+points[0].x+','+(svgH-8)+' Z';
+  var gridLines = '';
+  for(var li=1;li<=5;li++){
+    var ly = svgH-25-(li-1)*((svgH-50)/4);
+    gridLines+='<line x1="'+(pad-8)+'" y1="'+ly+'" x2="'+(svgW-pad+8)+'" y2="'+ly+'" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4,3"/>'
+      +'<text x="'+(pad-12)+'" y="'+(ly+4)+'" text-anchor="end" font-size="9" fill="#9CA3AF" font-family="sans-serif">'+li+'</text>';
+  }
+  var curveDots = points.map(function(p){
+    var sc = stageColors[p.e.etapa] || {header:'#7C3AED'};
+    var emoji = emocaoEmojis[p.e.emocao] || '😐';
+    return '<circle cx="'+p.x+'" cy="'+p.y+'" r="9" fill="'+sc.header+'" stroke="#fff" stroke-width="2.5"/>'
+      +'<text x="'+p.x+'" y="'+(p.y-15)+'" text-anchor="middle" font-size="15">'+emoji+'</text>'
+      +'<text x="'+p.x+'" y="'+(svgH-3)+'" text-anchor="middle" font-size="9" font-weight="700" fill="'+sc.header+'" font-family="sans-serif">'+p.e.etapa.toUpperCase()+'</text>';
+  }).join('');
+  var curveSVG = '<svg viewBox="0 0 '+svgW+' '+svgH+'" style="width:100%;display:block;" xmlns="http://www.w3.org/2000/svg">'
+    +'<defs><linearGradient id="cjmGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7C3AED" stop-opacity="0.3"/><stop offset="100%" stop-color="#7C3AED" stop-opacity="0.02"/></linearGradient></defs>'
+    +gridLines
+    +'<path d="'+areaD+'" fill="url(#cjmGrad)"/>'
+    +'<path d="'+pathD+'" fill="none" stroke="#7C3AED" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+    +curveDots
+    +'</svg>';
 
-    return '<div style="background:#fff;border:1px solid #E5E7EB;border-radius:6px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);">'
-      + '<div style="background:linear-gradient(135deg,#7C3AED,#5B21B6);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">'
-      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:16px;color:#fff;letter-spacing:1px;">' + e.emoji + ' ' + e.etapa.toUpperCase() + '</div>'
-      + '<div style="background:rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:10px;color:#EDE9FE;font-weight:600;">' + dots + '</div>'
-      + '</div>'
-      + '<div style="padding:14px 16px;">'
-      + '<div style="margin-bottom:10px;">' + tpTags + '</div>'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
-      + '<span style="font-size:22px;">' + emoji + '</span>'
-      + '<span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;">' + e.emocao + '</span>'
-      + '<span style="margin-left:auto;background:#'+vBg+';border-radius:2px;padding:2px 8px;font-size:10px;font-weight:700;">' + vIcon + ' ' + e.veredicto.toUpperCase() + '</span>'
-      + '</div>'
-      + '<div style="background:#F5F3FF;border-left:3px solid #7C3AED;padding:10px 14px;border-radius:0 4px 4px 0;font-style:italic;font-size:13px;color:#374151;line-height:1.6;">'
-      + '&ldquo;' + e.fala + '&rdquo;'
-      + '</div>'
-      + gapHTML
-      + '</div>'
-      + '</div>'
-      + connector;
+  // ── Cards das etapas ─────────────────────────────
+  var cardsHTML = etapas.map(function(e){
+    var sc  = stageColors[e.etapa] || {bg:'#F9FAFB', border:'#E5E7EB', header:'#374151', light:'#F3F4F6'};
+    var vi  = verdIcons[e.veredicto]  || '⚠️';
+    var vb  = verdBg[e.veredicto]    || '#FEF3C7';
+    var vc  = verdColor[e.veredicto] || '#92400E';
+    var emo = emocaoEmojis[e.emocao] || '😐';
+    var dots=''; for(var di=1;di<=5;di++) dots+='<span style="width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:1px;background:'+(di<=e.intensidade?sc.header:'#E5E7EB')+'"></span>';
+    var tpTags=(e.touchpoints||[]).map(function(t){return '<span style="background:'+sc.light+';color:'+sc.header+';border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;display:inline-block;margin:1px 2px;">'+t+'</span>';}).join('');
+    var gapHTML = e.gap && e.gap!=='null' && e.gap!==null
+      ? '<div style="margin-top:8px;background:#FEF2F2;border-left:2px solid #EF4444;padding:6px 8px;border-radius:0 3px 3px 0;font-size:10px;color:#991B1B;line-height:1.5;"><strong>⚠ Gap:</strong> '+e.gap+'</div>'
+      : '';
+    return '<div style="flex:1;min-width:150px;background:'+sc.bg+';border:1.5px solid '+sc.border+';border-radius:8px;overflow:hidden;display:flex;flex-direction:column;">'
+      +'<div style="background:'+sc.header+';padding:10px 12px;display:flex;align-items:center;justify-content:space-between;">'
+      +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:800;font-size:14px;color:#fff;letter-spacing:.5px;">'+e.emoji+' '+e.etapa.toUpperCase()+'</div>'
+      +'<div style="background:rgba(255,255,255,.2);border-radius:20px;padding:2px 6px;">'+dots+'</div>'
+      +'</div>'
+      +'<div style="padding:10px 12px;flex:1;display:flex;flex-direction:column;gap:7px;">'
+      +'<div style="min-height:20px;">'+tpTags+'</div>'
+      +'<div style="display:flex;align-items:center;gap:5px;">'
+      +'<span style="font-size:18px;">'+emo+'</span>'
+      +'<span style="font-size:9px;color:'+sc.header+';font-weight:700;text-transform:uppercase;letter-spacing:.5px;flex:1;">'+e.emocao+'</span>'
+      +'<span style="background:'+vb+';color:'+vc+';border-radius:2px;padding:1px 5px;font-size:9px;font-weight:700;">'+vi+'</span>'
+      +'</div>'
+      +'<div style="background:#fff;border-left:2px solid '+sc.border+';padding:7px 9px;border-radius:0 4px 4px 0;font-style:italic;font-size:11px;color:#374151;line-height:1.55;flex:1;">'
+      +'&ldquo;'+e.fala+'&rdquo;'
+      +'</div>'
+      +gapHTML
+      +'</div>'
+      +'</div>';
   }).join('');
 
-  var verdFinalColor = {positivo:'#D1FAE5;color:#065F46', neutro:'#FEF3C7;color:#92400E', negativo:'#FEE2E2;color:#991B1B'}[d.veredicto_final] || '#FEF3C7;color:#92400E';
+  // ── Resumo ───────────────────────────────────────
   var nota = d.nota_experiencia || '?';
-  var notaColor = nota >= 8 ? '#10B981' : nota >= 6 ? '#F59E0B' : '#EF4444';
+  var notaColor = nota>=8?'#10B981':nota>=6?'#F59E0B':'#EF4444';
+  var vfBg  = {positivo:'#D1FAE5', neutro:'#FEF3C7', negativo:'#FEE2E2'}[d.veredicto_final]||'#FEF3C7';
+  var vfCol = {positivo:'#065F46', neutro:'#92400E', negativo:'#991B1B'}[d.veredicto_final]||'#92400E';
 
-  var html = '<div style="margin-bottom:20px;">'
+  var html = '<div style="font-family:sans-serif;border-radius:8px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.1);">'
     // Header
-    + '<div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);border-radius:6px 6px 0 0;padding:20px 24px;color:#fff;margin-bottom:2px;">'
-    + '<div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#C4B5FD;margin-bottom:6px;">🗺️ Customer Journey Map</div>'
-    + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:22px;">'+brand+' × '+pName+'</div>'
-    + '</div>'
-    // Nota geral
-    + '<div style="background:#F9FAFB;border:1px solid #E5E7EB;border-top:none;padding:14px 24px;display:flex;align-items:center;gap:16px;margin-bottom:16px;">'
-    + '<div style="text-align:center;"><div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:42px;color:'+notaColor+';">'+nota+'</div><div style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">Nota Geral</div></div>'
-    + '<div style="flex:1;">'
-    + '<div style="font-size:11px;font-weight:700;margin-bottom:4px;">🏔️ Pico de experiência: <span style="color:#7C3AED;font-weight:600;">'+d.peak_moment+'</span></div>'
-    + '<div style="font-size:11px;font-weight:700;">🏁 Momento final: <span style="color:var(--muted);font-weight:400;">'+d.end_moment+'</span></div>'
-    + '</div>'
-    + '<div style="background:#'+verdFinalColor+';border-radius:3px;padding:6px 14px;font-size:11px;font-weight:700;">'+d.veredicto_final.toUpperCase()+'</div>'
-    + '</div>'
-    // Etapas
-    + '<div style="display:flex;flex-direction:column;gap:0;">' + stagesHTML + '</div>'
-    // Síntese da persona
-    + '<div style="margin-top:20px;background:linear-gradient(135deg,#1E1B4B,#312E81);border-radius:6px;padding:24px;">'
-    + '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#A5B4FC;font-weight:700;margin-bottom:12px;">💬 '+pName+' conta como foi</div>'
-    + '<div style="font-size:14px;color:#E0E7FF;line-height:1.9;font-style:italic;">&ldquo;'+d.sintese_persona+'&rdquo;</div>'
-    + '</div>'
-    + '</div>';
+    +'<div style="background:linear-gradient(135deg,#4C1D95,#7C3AED);padding:20px 24px;color:#fff;">'
+    +'<div style="font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#C4B5FD;margin-bottom:4px;">🗺️ Customer Journey Map — Visão da Persona</div>'
+    +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:24px;letter-spacing:1px;">'+brand.toUpperCase()+' × '+pName+'</div>'
+    +'<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;">'
+    +'<div style="background:rgba(255,255,255,.12);border-radius:6px;padding:8px 16px;text-align:center;">'
+    +'<div style="font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:38px;color:'+notaColor+';">'+nota+'</div>'
+    +'<div style="font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:#C4B5FD;">Nota Geral</div>'
+    +'</div>'
+    +'<div style="flex:1;min-width:180px;">'
+    +'<div style="font-size:11px;margin-bottom:5px;color:#E0E7FF;">🏔️ <strong>Pico:</strong> '+d.peak_moment+'</div>'
+    +'<div style="font-size:11px;color:#E0E7FF;">🏁 <strong>Final:</strong> '+d.end_moment+'</div>'
+    +'</div>'
+    +'<div style="background:'+vfBg+';color:'+vfCol+';border-radius:4px;padding:6px 14px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;">'+d.veredicto_final+'</div>'
+    +'</div>'
+    +'</div>'
+    // Curva emocional
+    +'<div style="background:#FAFAFA;border-left:1px solid #E5E7EB;border-right:1px solid #E5E7EB;padding:16px 20px;">'
+    +'<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9CA3AF;font-weight:700;margin-bottom:6px;">📈 Curva Emocional da Jornada (intensidade 1→5)</div>'
+    +curveSVG
+    +'</div>'
+    // Cards
+    +'<div style="border:1px solid #E5E7EB;border-top:none;padding:16px;background:#fff;">'
+    +'<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#9CA3AF;font-weight:700;margin-bottom:12px;">🗂️ Etapas da Jornada</div>'
+    +'<div style="display:flex;gap:8px;align-items:stretch;">'+cardsHTML+'</div>'
+    +'</div>'
+    // Síntese
+    +'<div style="background:linear-gradient(135deg,#1E1B4B,#312E81);padding:24px;">'
+    +'<div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#A5B4FC;font-weight:700;margin-bottom:12px;">💬 '+pName+' conta como foi a experiência</div>'
+    +'<div style="font-size:14px;color:#E0E7FF;line-height:1.9;font-style:italic;">&ldquo;'+d.sintese_persona+'&rdquo;</div>'
+    +'</div>'
+    +'</div>';
 
   el.innerHTML = html;
 }
+
 
 /* ══════════════════════════════════════
    AGENTIC COMMERCE SIMULATION
