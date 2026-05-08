@@ -1193,7 +1193,7 @@ function runPersonaAI(){
   var sector=(document.getElementById('brand-sector')||{}).value||'';
   if(!pName.trim()){alert('Preencha o nome da persona antes de gerar a análise.');return;}
   btn.disabled=true; btn.textContent='⏳ Analisando com IA...'; result.style.display='none';
-  var prompt='Você é especialista em psicologia do consumidor e marketing estratégico para MBA.\n\nPersona: Nome='+pName+', Idade/Ocupação='+pAge+', Local/Renda='+pLoc+', Canal='+pCh+', Dores='+pPains+', Motivações='+pMotiv+', Objeção='+pObj+'\nMarca: '+brand+' ('+sector+')\n\nResponda APENAS com JSON válido sem markdown nem texto extra:\n{"mbti":{"tipo":"XNFJ","nome":"O Protagonista","justificativa":"2-3 frases baseadas nos dados","comportamento_compra":"como decide a compra"},"disc":{"perfil":"SC","dominante":"S","justificativa":"2-3 frases","gatilho":"o que aciona a compra"},"arquetipo":{"nome":"O Cuidador","descricao":"1-2 frases","marcas_referencia":"3 marcas e por que","como_comunicar":"instrução de tom e mensagem"},"mapa_empatia":{"pensa":"o que passa pela cabeça","sente":"emoções dominantes","faz":"comportamentos de compra","ouve":"quem influencia"},"gatilhos":[{"gatilho":"Prova Social","descricao":"como ativa na persona","aplicacao":"como a marca usa"},{"gatilho":"Escassez","descricao":"como ativa","aplicacao":"como usar"},{"gatilho":"Autoridade","descricao":"como ativa","aplicacao":"como usar"}],"vocabulario":["palavra1","palavra2","palavra3","palavra4","palavra5","palavra6"],"risco_perda":"o que faria trocar de marca","insight_estrategico":"insight único e acionável para a marca"}';
+  var prompt='Você é especialista em psicologia do consumidor e marketing estratégico para MBA.\n\nPersona: Nome='+pName+', Idade='+pAge+', Ocupação='+(document.getElementById('persona-occupation')||{}).value+', Local='+pLoc+', Renda='+(document.getElementById('persona-income')||{}).value+', Canal='+pCh+', Dores='+pPains+', Motivações='+pMotiv+', Objeção='+pObj+'\nMarca: '+brand+' ('+sector+')\n\nResponda APENAS com JSON válido sem markdown nem texto extra:\n{"mbti":{"tipo":"XNFJ","nome":"O Protagonista","justificativa":"2-3 frases baseadas nos dados","comportamento_compra":"como decide a compra"},"disc":{"perfil":"SC","dominante":"S","justificativa":"2-3 frases","gatilho":"o que aciona a compra"},"arquetipo":{"nome":"O Cuidador","descricao":"1-2 frases","marcas_referencia":"3 marcas e por que","como_comunicar":"instrução de tom e mensagem"},"mapa_empatia":{"pensa":"o que passa pela cabeça","sente":"emoções dominantes","faz":"comportamentos de compra","ouve":"quem influencia"},"gatilhos":[{"gatilho":"Prova Social","descricao":"como ativa na persona","aplicacao":"como a marca usa"},{"gatilho":"Escassez","descricao":"como ativa","aplicacao":"como usar"},{"gatilho":"Autoridade","descricao":"como ativa","aplicacao":"como usar"}],"vocabulario":["palavra1","palavra2","palavra3","palavra4","palavra5","palavra6"],"risco_perda":"o que faria trocar de marca","insight_estrategico":"insight único e acionável para a marca"}';
   claudeAI(prompt, 1800)
   .then(function(json){
     renderPersonaCard(json,pName,pAge,pLoc,pCh);
@@ -1365,17 +1365,8 @@ function analyzeWheel(){
     + 'gatilhos: 3 gatilhos emocionais concretos e específicos para esta persona comprar.';
 
   claudeAI(prompt, 600)
-  .then(function(data){
-    // parse JSON da resposta
-    var text = '';
-    if(typeof data === 'object' && data.content){
-      text = data.content[0].text;
-    } else if(typeof data === 'string'){
-      text = data;
-    }
-    var clean = text.replace(/```json|```/g,'').trim();
-    var parsed = JSON.parse(clean);
-
+  .then(function(parsed){
+    // claudeAI já retorna o JSON parseado
     // Highlight no wheel
     wheelState = {};
     (parsed.emocoes_dominantes||[]).forEach(function(e){ wheelState[e] = true; });
@@ -1530,6 +1521,8 @@ function generateCJM(){
   var sector      = (document.getElementById('brand-sector')||{}).value||'varejo';
   var pName       = (document.getElementById('persona-name')||{}).value||'a persona';
   var pAge        = (document.getElementById('persona-age')||{}).value||'';
+  var pOccup      = (document.getElementById('persona-occupation')||{}).value||'';
+  var pIncome     = (document.getElementById('persona-income')||{}).value||'';
   var pPains      = (document.getElementById('persona-pains')||{}).value||'';
   var pMotiv      = (document.getElementById('persona-motivations')||{}).value||'';
   var pObj        = (document.getElementById('persona-objection')||{}).value||'';
@@ -1552,7 +1545,7 @@ function generateCJM(){
 
   var prompt = 'Você é especialista em Customer Experience e vai construir um Customer Journey Map completo.\n\n'
     + 'MARCA: '+brand+' | SETOR: '+sector+'\n'
-    + 'PERSONA: '+pName+' ('+pAge+') | Canal preferido: '+pChannel+'\n'
+    + 'PERSONA: '+pName+', '+pAge+', '+pOccup+' | Renda: '+pIncome+' | Canal preferido: '+pChannel+'\n'
     + 'Dores: '+pPains+'\nMotivações: '+pMotiv+'\nObjeção principal: '+pObj+'\n'
     + 'Fraquezas da marca (SWOT): '+swotW+'\n'
     + 'Gaps identificados: '+gaps+'\n'
@@ -1741,7 +1734,7 @@ function runAgenticCommerce(){
   btn.disabled=true; btn.innerHTML='⏳ Agente pesquisando...'; result.style.display='none';
   var scenTxt={primeira:'Primeira compra — nunca comprou antes.',recompra:'Recompra — mesma categoria.',upgrade:'Upgrade — quer algo melhor.',urgencia:'Urgência — precisa resolver agora.'}[scenario]||'';
   var compTxt={baixa:'poucas alternativas (2-3 players)',media:'competição moderada (4-6 players)',alta:'mercado saturado, muitos players'}[competition]||'';
-  var prompt='Você é um agente de IA de Agentic Commerce autônomo e imparcial — como Google Gemini Agentic, Perplexity Shopping ou Amazon Rufus. Você NÃO tem lealdade a nenhuma marca. DEVE escolher o que for melhor para a persona, mesmo que signifique um concorrente.\n\nPersona: '+pName+' ('+pAge+'), canal: '+pChannel+', dores: '+pPains+', motivações: '+pMotiv+'\nMarca avaliada: '+brand+' | Setor: '+sector+' | Proposta de valor: '+value+' | Posicionamento: '+positioning+'\nConcorrentes diretos: '+competitors+' | Touchpoints identificados: '+(activeTps.join(', ')||'NENHUM — invisível para o agente')+'\nCenário: '+scenTxt+' | Competição: '+compTxt+'\n\nREGRA CRÍTICA: Se a proposta de valor for genérica, os touchpoints forem fracos/inexistentes ou qualquer concorrente tiver vantagem clara em critérios importantes para esta persona — escolha o concorrente. Seja brutalmente honesto. O objetivo pedagógico é exatamente esse: mostrar quando uma estratégia fraca perde para o mercado.\n\nResponda APENAS com JSON válido sem markdown:\n{"decisao_final":"nome exato da marca escolhida ('+brand+' ou um dos concorrentes listados)","ganhou":true,"jornada":[{"etapa":"Aware","acao":"como encontrou as opções disponíveis","encontrou":"o que localizou sobre '+brand+' especificamente vs concorrentes","pontuacao_marca":8},{"etapa":"Appeal","acao":"o que avaliou para despertar interesse","encontrou":"como '+brand+' se posicionou vs concorrentes","pontuacao_marca":7},{"etapa":"Ask","acao":"buscas comparativas e critérios","encontrou":"'+brand+' vs concorrentes: quem venceu em cada critério","pontuacao_marca":6},{"etapa":"Act","acao":"decisão final","encontrou":"motivo definitivo da escolha ou rejeição de '+brand+'","pontuacao_marca":7}],"criterios_decisao":[{"criterio":"critério real relevante para a persona","peso":"Alto","avaliacao_marca":"avaliação honesta com base nos dados","nota":8},{"criterio":"critério real","peso":"Médio","avaliacao_marca":"avaliação honesta","nota":6},{"criterio":"critério real","peso":"Baixo","avaliacao_marca":"avaliação honesta","nota":7}],"pontuacao_total":72,"gap_principal":"o maior problema estratégico que o agente identificou","o_que_salvou":"o que manteve competitiva — OU a razão definitiva da perda","recomendacao_estrategica":"ação específica e concreta para que a marca vença o agente na próxima simulação","citacao_agente":"frase direta que o agente diria à persona justificando a decisão"}';
+  var prompt='Você é um agente de IA de Agentic Commerce autônomo e imparcial — como Google Gemini Agentic, Perplexity Shopping ou Amazon Rufus. Você NÃO tem lealdade a nenhuma marca. DEVE escolher o que for melhor para a persona, mesmo que signifique um concorrente.\n\nPersona: '+pName+' ('+pAge+', '+pOccupAg+', Renda: '+pIncomeAg+'), canal: '+pChannel+', dores: '+pPains+', motivações: '+pMotiv+'\nMarca avaliada: '+brand+' | Setor: '+sector+' | Proposta de valor: '+value+' | Posicionamento: '+positioning+'\nConcorrentes diretos: '+competitors+' | Touchpoints identificados: '+(activeTps.join(', ')||'NENHUM — invisível para o agente')+'\nCenário: '+scenTxt+' | Competição: '+compTxt+'\n\nREGRA CRÍTICA: Se a proposta de valor for genérica, os touchpoints forem fracos/inexistentes ou qualquer concorrente tiver vantagem clara em critérios importantes para esta persona — escolha o concorrente. Seja brutalmente honesto. O objetivo pedagógico é exatamente esse: mostrar quando uma estratégia fraca perde para o mercado.\n\nResponda APENAS com JSON válido sem markdown:\n{"decisao_final":"nome exato da marca escolhida ('+brand+' ou um dos concorrentes listados)","ganhou":true,"jornada":[{"etapa":"Aware","acao":"como encontrou as opções disponíveis","encontrou":"o que localizou sobre '+brand+' especificamente vs concorrentes","pontuacao_marca":8},{"etapa":"Appeal","acao":"o que avaliou para despertar interesse","encontrou":"como '+brand+' se posicionou vs concorrentes","pontuacao_marca":7},{"etapa":"Ask","acao":"buscas comparativas e critérios","encontrou":"'+brand+' vs concorrentes: quem venceu em cada critério","pontuacao_marca":6},{"etapa":"Act","acao":"decisão final","encontrou":"motivo definitivo da escolha ou rejeição de '+brand+'","pontuacao_marca":7}],"criterios_decisao":[{"criterio":"critério real relevante para a persona","peso":"Alto","avaliacao_marca":"avaliação honesta com base nos dados","nota":8},{"criterio":"critério real","peso":"Médio","avaliacao_marca":"avaliação honesta","nota":6},{"criterio":"critério real","peso":"Baixo","avaliacao_marca":"avaliação honesta","nota":7}],"pontuacao_total":72,"gap_principal":"o maior problema estratégico que o agente identificou","o_que_salvou":"o que manteve competitiva — OU a razão definitiva da perda","recomendacao_estrategica":"ação específica e concreta para que a marca vença o agente na próxima simulação","citacao_agente":"frase direta que o agente diria à persona justificando a decisão"}';
   claudeAI(prompt, 2000)
   .then(function(json){
     renderAgenticResult(json,brand);
@@ -2365,7 +2358,9 @@ function collectState(){
       brand_challenge:   val('brand-challenge'),
       persona_name:      val('persona-name'),
       persona_age:       val('persona-age'),
+      persona_occupation: val('persona-occupation'),
       persona_location:  val('persona-location'),
+      persona_income:    val('persona-income'),
       persona_channel:   val('persona-channel'),
       persona_pains:     val('persona-pains'),
       persona_motivations: val('persona-motivations'),
@@ -2422,7 +2417,8 @@ function applyState(s){
   set('brand-value',f1.brand_value); set('brand-competitors',f1.brand_competitors);
   set('brand-position',f1.brand_position); set('brand-challenge',f1.brand_challenge);
   set('persona-name',f1.persona_name); set('persona-age',f1.persona_age);
-  set('persona-location',f1.persona_location); set('persona-channel',f1.persona_channel);
+  set('persona-occupation',f1.persona_occupation||''); set('persona-location',f1.persona_location);
+  set('persona-income',f1.persona_income||''); set('persona-channel',f1.persona_channel);
   set('persona-pains',f1.persona_pains); set('persona-motivations',f1.persona_motivations);
   set('persona-objection',f1.persona_objection);
 
@@ -3274,12 +3270,20 @@ setTimeout(function(){
         <input class="finput" id="persona-name" type="text" placeholder="Ex: Fernanda" oninput="syncPersona()">
       </div>
       <div class="f-wrap">
-        <div class="f-lbl">Idade & Ocupação</div>
-        <input class="finput" id="persona-age" type="text" placeholder="Ex: 38 anos, Gestora de RH">
+        <div class="f-lbl">Idade</div>
+        <input class="finput" id="persona-age" type="text" placeholder="Ex: 38 anos">
       </div>
       <div class="f-wrap">
-        <div class="f-lbl">Localização & Renda</div>
-        <input class="finput" id="persona-location" type="text" placeholder="Ex: Goiânia (zona sul), renda ~R$6k/mês">
+        <div class="f-lbl">Ocupação / Profissão</div>
+        <input class="finput" id="persona-occupation" type="text" placeholder="Ex: Gestora de RH">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Localização</div>
+        <input class="finput" id="persona-location" type="text" placeholder="Ex: Goiânia (zona sul)">
+      </div>
+      <div class="f-wrap">
+        <div class="f-lbl">Renda Mensal</div>
+        <input class="finput" id="persona-income" type="text" placeholder="Ex: R$ 6.000/mês">
       </div>
       <div class="f-wrap">
         <div class="f-lbl">Canal Digital Preferido</div>
