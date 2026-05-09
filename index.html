@@ -669,6 +669,73 @@ function completePhase(from,to){
 
 function setTip(n){ document.getElementById('phase-tip').textContent = phaseTips[n-1]; }
 
+
+/* ══════════════════════════════════════
+   CHANNEL DIAG — COLLECT / APPLY
+══════════════════════════════════════ */
+function collectChannelDiag(){
+  var result = {};
+  diagChannels.forEach(function(ch, i){
+    var cid = 'ch-'+i;
+    result[cid] = {
+      desc:  (document.getElementById('chdiag-desc-'+cid)||{}).value||'',
+      nivel: (document.getElementById('chdiag-nivel-'+cid)||{}).value||''
+    };
+  });
+  return result;
+}
+
+function applyChannelDiag(data){
+  if(!data) return;
+  diagChannels.forEach(function(ch, i){
+    var cid = 'ch-'+i;
+    var d = data[cid];
+    if(!d) return;
+    var desc  = document.getElementById('chdiag-desc-'+cid);
+    var nivel = document.getElementById('chdiag-nivel-'+cid);
+    if(desc  && d.desc)  desc.value  = d.desc;
+    if(nivel && d.nivel) nivel.value = d.nivel;
+  });
+}
+
+/* ══════════════════════════════════════
+   OMNI MATURITY — COLLECT / APPLY
+══════════════════════════════════════ */
+function collectOmniState(){
+  var result = {};
+  omniDims.forEach(function(d, di){
+    var oid = 'omni-dim-'+di;
+    for(var n=1;n<=5;n++){
+      var el = document.getElementById(oid+'-'+n);
+      if(el && el.checked){ result[di] = n; break; }
+    }
+  });
+  return result;
+}
+
+function applyOmniState(data){
+  if(!data) return;
+  omniDims.forEach(function(d, di){
+    var val = data[di];
+    if(!val) return;
+    var oid = 'omni-dim-'+di;
+    var el = document.getElementById(oid+'-'+val);
+    if(el){
+      el.checked = true;
+      // Trigger visual update
+      var name = el.name;
+      document.querySelectorAll('input[name="'+name+'"]').forEach(function(x){
+        x.nextElementSibling.style.background = '';
+        x.nextElementSibling.style.color = 'var(--dark)';
+        x.nextElementSibling.style.borderColor = 'var(--border)';
+      });
+      el.nextElementSibling.style.background = 'var(--red)';
+      el.nextElementSibling.style.color = '#fff';
+      el.nextElementSibling.style.borderColor = 'var(--red)';
+    }
+  });
+}
+
 /* ══════════════════════════════════════
    CHANNEL DIAGNOSIS
 ══════════════════════════════════════ */
@@ -684,11 +751,12 @@ var diagChannels = [
 function renderChannelDiag(){
   var c = document.getElementById('channel-diag');
   c.innerHTML = diagChannels.map(function(ch,i){
+    var cid = 'ch-'+i;
     return '<div style="display:grid;grid-template-columns:160px 1fr 90px 90px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line);">' +
       '<div style="font-size:12px;font-weight:500;color:var(--mid);display:flex;align-items:center;gap:7px;">' +
         '<span style="width:8px;height:8px;border-radius:50%;background:'+(ch.type==='off'?'var(--red)':'var(--blue)')+'"></span>'+ch.name+'</div>' +
-      '<input class="finput" type="text" placeholder="Descreva brevemente a situação atual..." style="font-size:11px;padding:5px 8px;">' +
-      '<select style="width:100%;background:var(--surf);border:1px solid var(--border);font-size:11px;color:var(--dark);padding:5px;outline:none;margin:0 4px;" onchange="updateDiagScore(this)">' +
+      '<input id="chdiag-desc-'+cid+'" class="finput" type="text" placeholder="Descreva brevemente a situação atual..." style="font-size:11px;padding:5px 8px;" oninput="isDirty=true">' +
+      '<select id="chdiag-nivel-'+cid+'" style="width:100%;background:var(--surf);border:1px solid var(--border);font-size:11px;color:var(--dark);padding:5px;outline:none;margin:0 4px;" onchange="updateDiagScore(this);isDirty=true;">' +
         '<option value="">—</option><option value="1">1 — Ausente</option><option value="2">2 — Básico</option>' +
         '<option value="3">3 — Médio</option><option value="4">4 — Bom</option><option value="5">5 — Excelente</option>' +
       '</select>' +
@@ -716,14 +784,15 @@ var omniDims = [
 
 function renderOmniMaturity(){
   var c = document.getElementById('omni-maturity');
-  c.innerHTML = omniDims.map(function(d){
+  c.innerHTML = omniDims.map(function(d,di){
+    var oid = 'omni-dim-'+di;
     return '<div style="background:#fff;border:1px solid var(--border);border-radius:3px;padding:12px 16px;margin-bottom:8px;box-shadow:var(--shadow);">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">' +
         '<div><div style="font-size:13px;font-weight:600;color:var(--dark);">'+d.label+'</div>' +
           '<div style="font-size:11px;color:var(--muted);margin-top:2px;">'+d.desc+'</div></div>' +
         '<div style="display:flex;gap:4px;flex-shrink:0;">'+
           [1,2,3,4,5].map(function(n){
-            return '<label style="cursor:pointer;"><input type="radio" name="omni-'+d.label.replace(/\s/g,'')+'" value="'+n+'" style="display:none;" onchange="scoreOmni(this)"><span style="display:block;width:28px;height:28px;border:1px solid var(--border);text-align:center;line-height:26px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;border-radius:2px;" class="omni-btn">'+n+'</span></label>';
+            return '<label style="cursor:pointer;"><input type="radio" name="omni-'+d.label.replace(/\s/g,'')+'" id="'+oid+'-'+n+'" value="'+n+'" style="display:none;" onchange="scoreOmni(this);isDirty=true;"><span style="display:block;width:28px;height:28px;border:1px solid var(--border);text-align:center;line-height:26px;font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;border-radius:2px;" class="omni-btn">'+n+'</span></label>';
           }).join('')+
         '</div>' +
       '</div></div>';
@@ -2528,7 +2597,12 @@ function claudeAI(prompt, maxTokens) {
     if(data.error) throw new Error('Anthropic: '+(data.error.message||JSON.stringify(data.error)));
     var text = (data.content&&data.content[0]&&data.content[0].text)||'';
     if(!text) throw new Error('Resposta vazia. Verifique se a Edge Function "anthropic-proxy" está deployada no Supabase.');
-    return JSON.parse(text.replace(/```json|```/g,'').trim());
+    // Extrai JSON mesmo se houver texto antes/depois
+    var clean = text.replace(/```json|```/g,'').trim();
+    // Tenta encontrar o JSON no texto caso haja texto antes
+    var jsonMatch = clean.match(/\{[\s\S]*\}/);
+    if(jsonMatch) clean = jsonMatch[0];
+    return JSON.parse(clean);
   })
   .catch(function(err){
     var msg = err.message || 'Erro desconhecido';
@@ -2661,7 +2735,9 @@ function collectState(){
       metric_cac:   val('metric-cac'),
       metric_ltv:   val('metric-ltv'),
       metric_recompra: val('metric-recompra'),
-      metric_nps:   val('metric-nps')
+      metric_nps:   val('metric-nps'),
+      channel_diag: collectChannelDiag(),
+      omni_state:   collectOmniState()
     },
     swot_actions: swotActions,
     fase3:{
@@ -2718,6 +2794,8 @@ function applyState(s){
   set('omni-barrier',f2.omni_barrier);
   set('metric-cac',f2.metric_cac); set('metric-ltv',f2.metric_ltv);
   set('metric-recompra',f2.metric_recompra); set('metric-nps',f2.metric_nps);
+  if(f2.channel_diag) setTimeout(function(){ applyChannelDiag(f2.channel_diag); }, 200);
+  if(f2.omni_state)   setTimeout(function(){ applyOmniState(f2.omni_state);    }, 250);
 
   // swot actions
   if(s.swot_actions&&s.swot_actions.length>0){
