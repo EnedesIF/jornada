@@ -815,21 +815,45 @@ function renderEmotionTrack(){
 function renderGapAnalysis(){
   var c = document.getElementById('gap-analysis');
   c.innerHTML = stageData.map(function(st){
+    var sid = st.id;
     return '<div class="gap-row" style="display:grid;grid-template-columns:100px 80px 1fr 1fr;gap:8px;align-items:start;padding:10px 14px;border-bottom:1px solid var(--line);">' +
       '<div class="gap-stage-tag">'+st.name+'</div>' +
-      '<select class="gap-score-sel" onchange="updateGapScore(this)">' +
+      '<select id="gap-score-'+sid+'" class="gap-score-sel" onchange="updateGapScore(this)">' +
         '<option value="">—</option>' +
         [1,2,3,4,5].map(function(n){return '<option value="'+n+'">'+n+' / 5</option>';}).join('') +
       '</select>' +
-      '<textarea style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Cliente não encontra informações de preço online antes de ir à loja física." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
-      '<textarea style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Frustração que leva ao abandono. Persona prefere ir ao concorrente que tem app com catálogo." onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+      '<textarea id="gap-desc-'+sid+'" style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Cliente não encontra informações de preço online antes de ir à loja física." oninput="isDirty=true" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
+      '<textarea id="gap-impact-'+sid+'" style="width:100%;background:var(--surf);border:1px solid var(--border);font-family:\'Barlow\',sans-serif;font-size:11px;color:var(--dark);padding:5px 7px;resize:vertical;min-height:44px;outline:none;border-radius:1px;" placeholder="Ex: Frustração que leva ao abandono. Persona prefere ir ao concorrente que tem app com catálogo." oninput="isDirty=true" onfocus="this.style.borderColor=\'var(--red)\'" onblur="this.style.borderColor=\'var(--border)\'"></textarea>' +
     '</div>';
   }).join('');
 }
 
-function updateGapScore(sel){
-  totalScore += 10;
-  document.getElementById('score-display').textContent = totalScore;
+function collectGapState(){
+  var gaps = {};
+  stageData.forEach(function(st){
+    var sid = st.id;
+    gaps[sid] = {
+      score:  (document.getElementById('gap-score-'+sid)||{}).value||'',
+      desc:   (document.getElementById('gap-desc-'+sid)||{}).value||'',
+      impact: (document.getElementById('gap-impact-'+sid)||{}).value||''
+    };
+  });
+  return gaps;
+}
+
+function applyGapState(gaps){
+  if(!gaps) return;
+  stageData.forEach(function(st){
+    var sid = st.id;
+    var g = gaps[sid];
+    if(!g) return;
+    var sel = document.getElementById('gap-score-'+sid);
+    var desc = document.getElementById('gap-desc-'+sid);
+    var imp = document.getElementById('gap-impact-'+sid);
+    if(sel && g.score) sel.value = g.score;
+    if(desc && g.desc) desc.value = g.desc;
+    if(imp && g.impact) imp.value = g.impact;
+  });
 }
 
 /* ══════════════════════════════════════
@@ -840,6 +864,7 @@ var actOpen = [true,false,false,false,false];
 function renderActivationBlocks(){
   var c = document.getElementById('activation-blocks');
   c.innerHTML = stageData.map(function(st,i){
+    var sid = st.id;
     return '<div class="act-block">' +
       '<div class="act-head" onclick="toggleAct('+i+')">' +
         '<div class="act-title"><span class="act-stage-dot"></span>'+st.name+' — '+st.en+'</div>' +
@@ -848,32 +873,67 @@ function renderActivationBlocks(){
       '<div class="act-body'+(actOpen[i]?'':' hidden')+'" id="act-body-'+i+'">' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">Ativação Principal</div>' +
-          '<textarea class="finput" placeholder="Descreva a ativação concreta. Ex: Campanha de OOH no raio de 2km + Stories segmentados por geolocalização com oferta exclusiva para novos clientes." style="min-height:60px;" oninput="scoreAct('+i+')"></textarea>' +
+          '<textarea id="act-main-'+sid+'" class="finput" placeholder="Descreva a ativação concreta. Ex: Campanha de OOH no raio de 2km + Stories segmentados por geolocalização com oferta exclusiva para novos clientes." style="min-height:60px;" oninput="scoreAct('+i+');isDirty=true;"></textarea>' +
         '</div>' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">Tipo de Canal</div>' +
-          '<select class="finput" onchange="updateActBadge('+i+',this.value)">' +
+          '<select id="act-canal-'+sid+'" class="finput" onchange="updateActBadge('+i+',this.value);isDirty=true;">' +
             '<option value="">Selecione</option><option value="off">Off-line</option><option value="dig">Digital</option><option value="hyb">Híbrido (Off + Digital)</option>' +
           '</select>' +
         '</div>' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">Mensagem Central para a Persona</div>' +
-          '<textarea class="finput" placeholder="O que você quer que a persona pense, sinta ou faça após este touchpoint?" style="min-height:48px;"></textarea>' +
+          '<textarea id="act-msg-'+sid+'" class="finput" placeholder="O que você quer que a persona pense, sinta ou faça após este touchpoint?" style="min-height:48px;" oninput="isDirty=true;"></textarea>' +
         '</div>' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">Objetivo Específico (SMART)</div>' +
-          '<input class="finput" type="text" placeholder="Ex: Aumentar o alcance em 25% no raio de 5km em 60 dias">' +
+          '<input id="act-obj-'+sid+'" class="finput" type="text" placeholder="Ex: Aumentar o alcance em 25% no raio de 5km em 60 dias" oninput="isDirty=true;">' +
         '</div>' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">KPI Principal</div>' +
-          '<input class="finput" type="text" placeholder="Ex: Alcance, CPM, taxa de clique, conversão, NPS">' +
+          '<input id="act-kpi-'+sid+'" class="finput" type="text" placeholder="Ex: Alcance, CPM, taxa de clique, conversão, NPS" oninput="isDirty=true;">' +
         '</div>' +
         '<div class="f-wrap">' +
           '<div class="f-lbl">Integração com Próxima Etapa</div>' +
-          '<textarea class="finput" placeholder="Como este touchpoint leva a persona para a próxima fase da jornada? O que é o gatilho de transição?" style="min-height:48px;"></textarea>' +
+          '<textarea id="act-integ-'+sid+'" class="finput" placeholder="Como este touchpoint leva a persona para a próxima fase da jornada? O que é o gatilho de transição?" style="min-height:48px;" oninput="isDirty=true;"></textarea>' +
         '</div>' +
       '</div></div>';
   }).join('');
+}
+
+function collectActivationState(){
+  var acts = {};
+  stageData.forEach(function(st){
+    var sid = st.id;
+    acts[sid] = {
+      main:  (document.getElementById('act-main-'+sid)||{}).value||'',
+      canal: (document.getElementById('act-canal-'+sid)||{}).value||'',
+      msg:   (document.getElementById('act-msg-'+sid)||{}).value||'',
+      obj:   (document.getElementById('act-obj-'+sid)||{}).value||'',
+      kpi:   (document.getElementById('act-kpi-'+sid)||{}).value||'',
+      integ: (document.getElementById('act-integ-'+sid)||{}).value||''
+    };
+  });
+  return acts;
+}
+
+function applyActivationState(acts){
+  if(!acts) return;
+  stageData.forEach(function(st, i){
+    var sid = st.id;
+    var a = acts[sid];
+    if(!a) return;
+    var set = function(id, val){ var el=document.getElementById(id); if(el&&val) el.value=val; };
+    set('act-main-'+sid,  a.main);
+    set('act-msg-'+sid,   a.msg);
+    set('act-obj-'+sid,   a.obj);
+    set('act-kpi-'+sid,   a.kpi);
+    set('act-integ-'+sid, a.integ);
+    if(a.canal){
+      var sel = document.getElementById('act-canal-'+sid);
+      if(sel){ sel.value = a.canal; updateActBadge(i, a.canal); }
+    }
+  });
 }
 
 function toggleAct(i){
@@ -1479,6 +1539,7 @@ function analyzeParBar(){
   var btn    = document.getElementById('parbar-btn');
   var result = document.getElementById('parbar-ai-result');
   if(!parBarResult) return;
+  // usa claudeAIText — retorna texto livre, não JSON
   var brand  = (document.getElementById('brand-name')||{}).value||'a marca';
   var sector = (document.getElementById('brand-sector')||{}).value||'varejo';
   var bench  = parBarResult.benchmark;
@@ -1500,7 +1561,7 @@ function analyzeParBar(){
     + '3. A ação mais urgente e concreta para melhorar o índice mais crítico\n'
     + 'Tom: direto, MBA-level.';
 
-  claudeAI(prompt, 800)
+  claudeAIText(prompt, 800)
   .then(function(text){
     result.innerHTML = '<p>'+text.replace(/\n\n/g,'</p><p style="margin-top:10px;">')+'</p>';
     btn.disabled=false; btn.textContent='✨ Regenerar Interpretação';
@@ -1900,6 +1961,8 @@ function runAgenticCommerce(){
   var positioning=(document.getElementById('brand-position')||{}).value||'';
   var pName=(document.getElementById('persona-name')||{}).value||'a persona';
   var pAge=(document.getElementById('persona-age')||{}).value||'';
+  var pOccupAg=(document.getElementById('persona-occupation')||{}).value||'';
+  var pIncomeAg=(document.getElementById('persona-income')||{}).value||'';
   var pChannel=(document.getElementById('persona-channel')||{}).value||'';
   var pPains=(document.getElementById('persona-pains')||{}).value||'';
   var pMotiv=(document.getElementById('persona-motivations')||{}).value||'';
@@ -2083,6 +2146,7 @@ function exportSwotToActionPlan(){
     }
   });
   renderPlanActions();
+  updateMatrix();
   // show success feedback
   var btn = event.target;
   btn.textContent = '✓ Exportado!';
@@ -2222,17 +2286,19 @@ function updateMatrix(){
     if(el)el.innerHTML='';
   });
   planActions.forEach(function(a){
-    if(a.score===null) return;
     var imp=parseFloat(a.impacto)||0;
     var cst=parseFloat(a.custo)||0;
+    // Se não preencheu, usa defaults (impacto médio, viabilidade média)
+    if(imp===0) imp=5;
+    if(cst===0) cst=5;
     var highImp = imp>=5;
-    var highVia = cst>=5;
+    var highVia = cst<=5; // custo BAIXO = alta viabilidade (corrigido)
     var quadKey = (highImp?'H':'L')+(highVia?'H':'L');
     var el=document.getElementById('quad-'+quadKey+'-items');
     if(el){
       var div=document.createElement('div');
       div.className='quad-item';
-      div.textContent=(a.text||'Ação sem descrição').substring(0,48)+(a.text.length>48?'…':'');
+      div.textContent=(a.text||'Ação sem descrição').substring(0,48)+((a.text||'').length>48?'…':'');
       el.appendChild(div);
     }
   });
@@ -2465,10 +2531,56 @@ function claudeAI(prompt, maxTokens) {
     return JSON.parse(text.replace(/```json|```/g,'').trim());
   })
   .catch(function(err){
-    // Se o proxy falhar, mostra mensagem clara
     var msg = err.message || 'Erro desconhecido';
     if(msg.indexOf('Failed to fetch') > -1 || msg.indexOf('NetworkError') > -1){
       throw new Error('Edge Function não encontrada. Verifique se "anthropic-proxy" está deployada em: Supabase → Edge Functions.');
+    }
+    throw err;
+  });
+}
+
+// Versão para respostas em texto livre (não JSON)
+function claudeAIText(prompt, maxTokens) {
+  var saved = localStorage.getItem('anthropic_key');
+  if(saved && saved.startsWith('sk-ant-')) ANTHROPIC_KEY = saved;
+
+  if(!ANTHROPIC_KEY) {
+    return Promise.reject(new Error('Configure a chave Anthropic no Painel do Professor.'));
+  }
+
+  var payload = {
+    _anthropic_key: ANTHROPIC_KEY,
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens || 1800,
+    messages: [{ role: 'user', content: prompt }]
+  };
+
+  return fetch(AI_PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + SB_KEY,
+      'apikey': SB_KEY
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) {
+    if(!r.ok) return r.json().then(function(e){
+      var msg = e.error || e.message || 'HTTP '+r.status;
+      throw new Error('Proxy: '+JSON.stringify(msg));
+    });
+    return r.json();
+  })
+  .then(function(data) {
+    if(data.error) throw new Error('Anthropic: '+(data.error.message||JSON.stringify(data.error)));
+    var text = (data.content&&data.content[0]&&data.content[0].text)||'';
+    if(!text) throw new Error('Resposta vazia.');
+    return text;
+  })
+  .catch(function(err){
+    var msg = err.message || 'Erro desconhecido';
+    if(msg.indexOf('Failed to fetch') > -1 || msg.indexOf('NetworkError') > -1){
+      throw new Error('Edge Function não encontrada.');
     }
     throw err;
   });
@@ -2554,7 +2666,9 @@ function collectState(){
     swot_actions: swotActions,
     fase3:{
       touchpoints:  tpSnap,
-      peso:         collectPesoState()
+      peso:         collectPesoState(),
+      gaps:         collectGapState(),
+      activations:  collectActivationState()
     },
     fase4:{
       budget:       budgetState,
@@ -2640,6 +2754,8 @@ function applyState(s){
     updateSummaryTP();
   }
   if(f3.peso) applyPesoState(f3.peso);
+  if(f3.gaps) setTimeout(function(){ applyGapState(f3.gaps); }, 100);
+  if(f3.activations) setTimeout(function(){ applyActivationState(f3.activations); }, 150);
 
   // fase 4 budget
   var f4=s.fase4||{};
@@ -2664,6 +2780,7 @@ function applyState(s){
   if(s.plan_actions&&s.plan_actions.length>0){
     planActions = s.plan_actions;
     renderPlanActions();
+    updateMatrix();
   }
 
   // fase 6
