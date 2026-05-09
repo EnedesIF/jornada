@@ -2754,8 +2754,14 @@ function applyState(s){
     updateSummaryTP();
   }
   if(f3.peso) applyPesoState(f3.peso);
-  if(f3.gaps) setTimeout(function(){ applyGapState(f3.gaps); }, 100);
-  if(f3.activations) setTimeout(function(){ applyActivationState(f3.activations); }, 150);
+  if(f3.gaps) setTimeout(function(){ 
+    renderGapAnalysis();
+    applyGapState(f3.gaps); 
+  }, 300);
+  if(f3.activations) setTimeout(function(){ 
+    renderActivationBlocks();
+    applyActivationState(f3.activations); 
+  }, 400);
 
   // fase 4 budget
   var f4=s.fase4||{};
